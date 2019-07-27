@@ -29,7 +29,8 @@ Ejemplo:
 `casas <- read.csv('kc_house_data.csv', header = T, na.strings = '?')`
 
 ```{r}
-# Escriba su código aqui
+KingHouses <- read.csv('kc_house_data.csv', header = T, na.strings = '?')
+
 ```
 
 Utilice la función summary sobre el dataset
@@ -39,7 +40,8 @@ Ejemplo:
 `summary(casas)`
 
 ```{r}
-# Escriba su código aqui
+summary(KingHouses)
+
 ```
 
 ```{r}
@@ -60,12 +62,14 @@ Ejemplo
 
 ```{r}
 # Escriba su código aqui
+KingHousesMin <- KingHouses[,c(3,6)]
+
 ```
 
 Utilice la función summary sobre la nueva variable
 
 ```{r}
-# Escriba su código aqui
+summary(KingHousesMin)
 ```
 
 Aplique la función de correlación para obtener las correlaciones entre las columnas seleccionadas (price, sqft_living)
@@ -76,6 +80,7 @@ Ejemplo:
 
 ```{r}
 # Escriba su código aqui
+cor(KingHousesMin)
 ```
 
 ### Interpretando los resultados de la correlación
@@ -102,7 +107,12 @@ Ejemplo
 `cor(casas, method='spearman')`
 
 ```{r}
-# Escriba su código aqui
+cor(KingHousesMin, method = 'pearson')
+```
+
+```{r}
+cor(KingHousesMin, method = 'spearman')
+
 ```
 
 ### Visualización
@@ -116,7 +126,8 @@ Ejemplo
 `plot(y = casas$price,x = casas$sqft_living, main = 'Relación entre Precio y Metros cuadrados', ylab = 'price', xlab = 'sqft_living')`
 
 ```{r}
-# Escriba su código aqui
+plot(y = KingHousesMin$price,x = KingHousesMin$sqft_living, main = 'Relación entre Precio y Area', ylab = 'precio', xlab = 'Area (sqft)')
+
 ```
 
 ## Conclusiones
