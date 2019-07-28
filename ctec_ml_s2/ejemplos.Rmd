@@ -20,11 +20,11 @@ library(visdat)
 Comentario: Nunca usar options(warn -1) o supressWarnings()
 
 ```{r}
-casas_df <- read.csv("datos/kc_house_data.csv")
+!!casas_df <- read.csv("kc_house_data.csv")
 
-read_csv("datos/kc_house_data.csv")
+!! read_csv("kc_house_data.csv")
 
-casas <- read_csv("datos/kc_house_data.csv",
+casas <- read_csv("kc_house_data.csv",
                   col_types = cols(
                     .default = col_double(),
                     id = col_character()
