@@ -34,6 +34,7 @@ Ejemplo:
 
 ```{r}
 KingHouses <- read.csv('kc_house_data.csv', header = T, na.strings = '?')
+KingHouses2 <- readr::read_csv('kc_house_data.csv')
 
 ```
 
@@ -55,7 +56,7 @@ library(caTools)
 #Librería de gráficos
 library(ggplot2)
 #Evitar mostrar warning messages
-options(warn=-1)
+
 ```
 
 Cargue en una variable las columnas 'price' y 'sqft_living'
@@ -137,4 +138,18 @@ plot(y = KingHousesMin$price,x = KingHousesMin$sqft_living, main = 'Relación en
 ## Conclusiones
 
 Como se puede observar tanto en la gráfica como en las correlaciones, existe una tendencia clara en el aumento del precio de las viviendas con respecto a los metros cuadrados. Con este pequeño análisis de los datos podemos elegir las variables predictoras y el modelo inicial, en este caso podemos elegir utilizar una regresión lineal simple utilizando la columna 'sqft_living' como variable predictora.
+
+```{r}
+
+hist(KingHousesMin$price)
+
+preciolog10 = log10(KingHousesMin$price)
+preciolog = log(KingHousesMin$price)
+
+
+hist(preciolog)
+hist(preciolog10)
+
+
+```
 
