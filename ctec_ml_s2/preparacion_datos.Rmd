@@ -7,7 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# 
+# Jorge Porras Araya
 
 # Breve introducción a ggpairs
 
@@ -21,6 +21,7 @@ library(ggplot2)
 
 casas <- read.csv('kc_house_data.csv', header = T, na.strings = '?')
 ggpairs(casas, columns = 3:7)
+
 ```
 
 
@@ -35,6 +36,10 @@ La función `is.na` nos permite detectar los valores faltantes en un dataset.
 El siguiente código muestra el número de elementos faltantes en todo un dataset
 
 `sum(is.na(dataset))`
+```{r}
+sum(is.na(casas))
+```
+
 
 
 También podemos buscar valores faltantes en columnas especificas
@@ -66,21 +71,30 @@ Como podemos observar la columna bathrooms posee valores inconsistentes ya que n
 
 Modifique la columna bathrooms para que solo posea valores enteros
 
+# con la funcion floor podemos obtener el entero anterior
+
 ```{r}
-# Escriba su código aqui
+casas$bathrooms <- floor(casas$bathrooms)
+head(casas$bathrooms, 20)
+
 ```
 
 ### 2. Llevar los datos a distribución normal.
 
 Modifique la columna price del dataset de precios de casas para que siga una distribución normal. Pista: utilice la función `log10`
 
+se puede observar que con logaritmo natural la distrucion parece asemejarse mas a la distribucion normal que con el log10
+
 ```{r}
 # Precios antes de la modificación
 hist(casas$price)
 # Escriba su codigo aqui
-# ...
+alt_casas_price <- log(casas$price)
+casas$price <- log10(casas$price)
+
 # Precios normalmente distribuidos
 hist(casas$price)
+hist(alt_casas_price)
 ```
 
 Note que ahora los precios ya no se agrupan a la izquierda.
@@ -92,7 +106,10 @@ Reemplace los valores faltantes de la columna sqft_living con la mediana de los 
 Nota: este dataset no posee valores faltantes pero para efectos del ejercicio esto no nos afecta ya que el código sería igual.
 
 ```{r}
-# Escriba su código aqui
+mediana <- median(casas$sqft_living)
+
+casas$sqft_living[is.na(casas$sqft_living)] <- mediana
+
 ```
 
 
@@ -110,11 +127,53 @@ feature_scaling <- function(x) {
 ```
 
 1. Utilice la función `feature_scaling` para escalar los valores de la columna sqft_lot
-2. Compare el resultado con la función `scale()`
 
 ```{r}
-# Escriba su código aqui
+head(casas$sqft_lot)
+scaling1 <- feature_scaling(casas$sqft_lot)
+head(scaling1)
+
 ```
+
+
+2. Compare el resultado con la función `scale()`
+
+la funcion scale realiza este escalamiento cuando le pasamos los parametros center en el valor minimo de nuestro rango y scale que seria el rango completo (maximo - minimo).
+
+al final se puede observar como cmp no tienen ningun valor verdadero, o sea no hay valores diferentes
+
+```{r}
+
+minimo = min(casas$sqft_lot)
+rango = max(casas$sqft_lot) - min(casas$sqft_lot)
+
+scaling2 <- scale(casas$sqft_lot, center = minimo, scale = rango )
+head(scaling2)
+
+cmp <- !(scaling1 == scaling2)
+length(scaling1[cmp])
+
+```
+
+La funcion scale por defecto utiliza el promedio y la desviacion standard para calcular el escalamiento, como se muestra a continuacion, se puede uibservar que la formula que utiliza scale es semejante a (x - promedio) / sd 
+
+```{r}
+scaling3 <- scale(casas$sqft_lot)
+head(scaling3)
+
+sd = sd(casas$sqft_lot)
+avg <- mean(casas$sqft_lot)
+
+scaling4 <- (casas$sqft_lot - avg)/sd
+head(scaling4)
+
+cmp <- !(scaling3 == scaling4)
+length(scaling3[cmp])
+ 
+```
+
+
+
 
 ### 5. Normalización con la función z-score
 
@@ -124,13 +183,23 @@ Escriba la función z_score y utilicela sobre la columna bathrooms.
 
 Pista: utilice las funciones `mean`, `sd`
 
+
+
 ```{r}
 # Datos antes de la transformación
 hist(casas$bathrooms)
 # Escriba su código aqui
 # ...
+z_score <- function(x){
+  sd = sd(x)
+  avg <- mean(x)
+  return(x - avg)/sd
+}
+bathrooms2 <- z_score(casas$bathrooms)
+
 # Después de la transformación
-hist(casas$bathrooms)
+hist(bathrooms2)
+mean(bathrooms2)
 ```
 
 Note que ahora la media de los datos se acerca a 0
