@@ -1,6 +1,8 @@
 ---
 title: "Regresion"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -35,26 +37,69 @@ Con el fin de analizar y tratar de estimar las millas por galón de diferentes m
 
 # Ejercicios 
 
+
+
+
+
+
+# Prueba 1
+
+
 1. Cargue el archivo auto-mpg_g.csv en una variable
 ```{r}
-library(GGally)
-library(MASS)
-library(caTools)
+  library(GGally)
+  library(MASS)
+  library(caTools)
+  library(visdat)
+  library(Metrics)
+  library(dplyr)
 ```
 
+Se lee el archivo .csv
+la visualizacion de los datos nos muestra que no tenemos valores nulos
+model.name es un factor
+Se eliminan las variables categoricas
+Se eliminan las filas con hp = 0, pues si se desea emplear escala logaritmica, log(0) esta indefinido (-inf), ademas no pueden existir vehiculos con potencia = 0hp
+
+```{r}
+  autosCSV <- read.csv("auto-mpg_g.csv")
+  autos <- autosCSV %>% 
+    select (mpg, disp, hp, weight, acc, cyl, model.name) %>% 
+    filter(hp > 0)
+
+  vis_dat(autos)
+```
 
 
 ```{r}
-# Escriba su código aqui
-autos <- read.csv("auto-mpg_g.csv")
-Y = autos[,8]       #Etiquetas
-autos = autos[,-c(2, 7, 8, 9)]
+boxplot(autos$mpg, 
+        main="Consumo de combustible",
+        ylab="mpg")
+
+boxplot(autos$hp, 
+        main="Potencia",
+        ylab="hp")
+
+boxplot(autos$weight, 
+        main="Peso",
+        ylab="pounds")
+
 ```
+
+
+de los histogramas se puede observar que existen algunos puntos en hp que son considerados outliers, sin embargo se decide no eliminarlos pues son valores reales de potencia de vehiculos (valores mayores a 200 hp).
+
+```{r}
+  outliers <- boxplot(autos$hp, plot = F)$out
+  outliers
+```
+
+
 
 2. Utilizando Ggpairs cree un gráfico de los atributos del dataset, observe las correlaciones entre atributos
 
 ```{r}
-ggpairs(autos)
+  ggpairs(autos[-7], progress = F)
 ```
 
 3. Separe los datos en 2 conjuntos, uno de entrenamiento y otro de pruebas. Normalmente se trabaja utilizando un 70-80% de los datos para entrenamiento y el resto para pruebas.
@@ -63,11 +108,61 @@ Recuerde fijar una semilla para que el documento sea reproducible.
 
 Pista: https://www.rdocumentation.org/packages/caTools/versions/1.17.1/topics/sample.split
 ```{r}
-set.seed(3)
-mask <- sample.split(Y, SplitRatio = 7/10)
-training_data <- autos[mask, c(2,3,4)]
-test_data <- autos[!mask, c(2,3,4)]
+  set.seed(4)
+  mask <- sample.split(autos$model.name, 
+                       SplitRatio = 7/10)
 
+  training_data <- autos[mask, c(1, 2, 3, 4, 5, 6)]
+  test_data <- autos[!mask, c(1, 2, 3, 4, 5, 6)]
+
+```
+
+revisando la relacion entre los datos de entrenamiento y los de prueba se puede observar que la relacion es de aproximadamente 70%, el cual es el valor esperado.
+```{r}
+  ratio <- 100 * length(training_data$mpg) /
+    (length(training_data$mpg) + length(test_data$mpg))
+  
+ratio
+
+```
+
+
+utilizando como variable objetivo mpg y como variables predictoras hp, disp y weight, se realiza un histograma para observar el comportamiento de las variables
+
+```{r}
+hist(training_data$mpg)
+hist(training_data$hp)
+hist(training_data$weight)
+hist(training_data$disp)
+
+```
+
+luego se crean hitogramas de las mismas variables pero esta vez en escala logaritmica
+
+```{r}
+hist(log(training_data$mpg))
+hist(log(training_data$hp))
+hist(log(training_data$weight))
+hist(log(training_data$disp))
+
+```
+
+
+
+
+```{r}
+  plot(training_data$hp, training_data$mpg)
+```
+
+
+
+```{r}
+  plot(training_data$weight, training_data$mpg)
+```
+
+
+```{r}
+  plot(training_data$disp, training_data$mpg)
 ```
 
 4. Cree un modelo de regresion lineal utilizando el atributo mpg como la variable objetivo y en base a las correlaciones observadas en el gráfico del punto 2 escoja al menos dos atributos para usarlos como variables predictoras para el modelo.
@@ -77,22 +172,238 @@ Pista: https://www.rdocumentation.org/packages/lessR/versions/1.9.8/topics/reg
 Nota: Al crear el modelo utilice el conjunto de datos de entrenamiento definido en el punto 3.
 
 ```{r}
-# Escriba su código aqui
+
+  line_model <- lm(mpg ~ hp + weight, data = training_data)
+  print(line_model)
+
 ```
+
+
+
+```{r}
+  predicted_data  <- predict(line_model, test_data)
+  predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+
+```
+
+
 
 5. Realice predicciones utilizando el conjunto de pruebas y evalue el resultado con la métrica MSE.
 
-Pista: https://www.rdocumentation.org/packages/mltools/versions/0.3.5/topics/mse
 ```{r}
-library(Metrics)
-# Escriba su código aqui
+mse(predicts_real$predicted,predicts_real$real)
+
+
 ```
+
+
+
+
+
+
+
+
+########################################################################################################
+
+utilizando logaritmos para prodicir una distribucion mas normal
+
+
+```{r}
+  
+  plot(training_data$hp, training_data$mpg)
+  plot(training_data$hp, log(training_data$mpg))
+  plot(log(training_data$hp), log(training_data$mpg))
+  
+
+```
+
+
+
+```{r}
+  
+  plot(training_data$weight, training_data$mpg)
+  plot(training_data$weight, log(training_data$mpg))
+  plot(log(training_data$weight), log(training_data$mpg))
+  
+
+```
+
+
+```{r}
+  
+  plot(training_data$disp, training_data$mpg)
+  plot(training_data$disp, log(training_data$mpg))
+  plot(log(training_data$disp), log(training_data$mpg))
+  
+
+```
+
+
+
+4. Cree un modelo de regresion lineal utilizando el atributo mpg como la variable objetivo y en base a las correlaciones observadas en el gráfico del punto 2 escoja al menos dos atributos para usarlos como variables predictoras para el modelo.
+
+Pista: https://www.rdocumentation.org/packages/lessR/versions/1.9.8/topics/reg
+
+Nota: Al crear el modelo utilice el conjunto de datos de entrenamiento definido en el punto 3.
+
+```{r}
+line_model <- lm(log(mpg) ~ hp + weight, data = training_data)
+```
+
+
+
+
+```{r}
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
+
+plot(predicts_real)
+```
+
+
+
+5. Realice predicciones utilizando el conjunto de pruebas y evalue el resultado con la métrica MSE.
+
+```{r}
+mse(predicts_real$predicted,predicts_real$real)
+
+
+```
+
+
+
 
 6. Opcional
 
 6.a Pruebe varios modelos que utilicen diferentes variables y comparar los resultados obtenidos
 
 6.b Investigar como implementar en R las técnicas de preprocesado y normalización vistas en clase y aplicarlas a los datos antes de pasarlos al modelo.
+
+
+#############################################################################
+
+
+
+
+```{r}
+line_model <- lm(mpg ~ hp + weight + disp, 
+                 data = training_data)
+
+predicted_data  <- predict(line_model, 
+                           test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, 
+                                  predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+```{r}
+line_model <- lm(mpg ~ hp, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+```{r}
+line_model <- lm(mpg ~ weight, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+```{r}
+line_model <- lm(mpg ~ weight + disp, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+
+
+```{r}
+line_model <- lm(mpg ~ log(hp), data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+```{r}
+line_model <- lm(mpg ~ log(weight), data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+```{r}
+line_model <- lm(mpg ~ log(weight) + disp, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+
+```{r}
+line_model <- lm(mpg ~ log(weight) + log(disp), data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+
+```{r}
+line_model <- lm(log(mpg) ~ log(weight) + log(disp), data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+```{r}
+line_model <- lm(log(mpg) ~ disp + weight + hp + acc, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+
+```{r}
+line_model <- lm(log(mpg) ~ log(disp) + weight + hp, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+
+```{r}
+plot(autos$disp, autos$mpg)
+plot(log(autos$disp), autos$mpg)
+plot(autos$disp, log(autos$mpg))
+plot(log(autos$disp), log(autos$mpg))
+
+plot(sqrt(autos$disp), sqrt(autos$mpg))
+
+
+```
+
 
 
 
