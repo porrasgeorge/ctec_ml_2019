@@ -178,7 +178,7 @@ Nota: Al crear el modelo utilice el conjunto de datos de entrenamiento definido 
 
 5. Realice predicciones utilizando el conjunto de pruebas y evalue el resultado con la métrica MSE.
 
-  Se puede observar que para los datos de prueba, en la mayoria de los casos las predicciones se aproximan al valor real, idealmente deberian estar lo mas cercano posible a la recta en morado. 
+  Se puede observar que para los datos de prueba, en la mayoria de los casos las predicciones se aproximan al valor real, idealmente deberian estar lo mas cercano posible a la recta con pendiente unitaria y interseccion con "y" en cero (recta en color morado). 
 
 ```{r}
   predicted_data  <- predict(line_model, test_data)
@@ -252,10 +252,8 @@ Se grafican los datos que se predijeron contra los datos reales, de igual manera
 ```{r}
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
-
 plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
 abline(a = 0, b = 1, col = "purple", , lwd = 4)
-
 ```
 
 
@@ -264,11 +262,9 @@ Sin embargo la métrica MSE arroja un resultado ligeramente mejor.
 
 ```{r}
 mse(predicts_real$predicted,predicts_real$real)
-
-
 ```
 
-Utilizando diversas variables y distintos procesados a las mismas, se obtienen metricas muy semejantes, como se puede observar a continuacion.
+Utilizando diversas variables y distintos procesados a las mismas, se obtienen metricas muy semejantes, como se puede observar a continuacion, en donde aunque se traten las variable con funciones logaritmicas (ni con el inverso multiplicativo como en el ultimo ejemplo), los resultados no varian de forma significativa.
 
 
 
@@ -276,8 +272,9 @@ Utilizando diversas variables y distintos procesados a las mismas, se obtienen m
 line_model <- lm(mpg ~ hp + weight + disp, data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
-
 ```
 
 
@@ -285,8 +282,9 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(mpg ~ hp, data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
-
 ```
 
 
@@ -294,6 +292,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(mpg ~ weight, data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -303,6 +303,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(mpg ~ weight + disp, data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -314,6 +316,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(mpg ~ log(hp), data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -323,6 +327,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(mpg ~ log(weight), data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -332,6 +338,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(mpg ~ log(weight) + disp, data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -342,6 +350,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(mpg ~ log(weight) + log(disp), data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -352,6 +362,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(log(mpg) ~ log(weight) + log(disp), data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -360,6 +372,8 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(log(mpg) ~ disp + weight + hp + acc, data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -370,6 +384,19 @@ mse(predicts_real$predicted,predicts_real$real)
 line_model <- lm(log(mpg) ~ log(disp) + weight + hp, data = training_data)
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
+mse(predicts_real$predicted,predicts_real$real)
+
+```
+
+
+```{r}
+line_model <- lm(1/(mpg) ~ disp + weight + hp, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = 1/(predicted_data)))
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
