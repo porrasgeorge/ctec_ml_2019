@@ -37,12 +37,7 @@ Con el fin de analizar y tratar de estimar las millas por galón de diferentes m
 
 # Ejercicios 
 
-
-
-
-
-
-# Prueba 1
+## Prueba 1
 
 
 1. Cargue el archivo auto-mpg_g.csv en una variable
@@ -56,7 +51,7 @@ Con el fin de analizar y tratar de estimar las millas por galón de diferentes m
 ```
 
 Se lee el archivo .csv
-la visualizacion de los datos nos muestra que no tenemos valores nulos
+La visualizacion de los datos nos muestra que no tenemos valores nulos
 model.name es un factor
 Se eliminan las variables categoricas
 Se eliminan las filas con hp = 0, pues si se desea emplear escala logaritmica, log(0) esta indefinido (-inf), ademas no pueden existir vehiculos con potencia = 0hp
@@ -127,7 +122,7 @@ ratio
 ```
 
 
-utilizando como variable objetivo mpg y como variables predictoras hp, disp y weight, se realiza un histograma para observar el comportamiento de las variables
+utilizando como variable objetivo mpg y como variables predictoras hp, disp y weight, se realiza un histograma para observar el comportamiento de las variables, pero sin embargo regresion lineal no requiere de una distribucion normal de los datos.
 
 ```{r}
 hist(training_data$mpg)
@@ -137,7 +132,8 @@ hist(training_data$disp)
 
 ```
 
-luego se crean hitogramas de las mismas variables pero esta vez en escala logaritmica
+
+luego se crean hitogramas de las mismas variables pero esta vez en escala logaritmica, donde se observa que para ninguno de los casos se llega a una distribucion normal. 
 
 ```{r}
 hist(log(training_data$mpg))
@@ -147,7 +143,7 @@ hist(log(training_data$disp))
 
 ```
 
-
+Se realiza un plot de cada una de las variables contra la variable mpg, donde se puede observar que se tienen distribuciones relativamente lineales (mas adelante se probaran algunas modificaciones). 
 
 
 ```{r}
@@ -165,11 +161,12 @@ hist(log(training_data$disp))
   plot(training_data$disp, training_data$mpg)
 ```
 
+
+
 4. Cree un modelo de regresion lineal utilizando el atributo mpg como la variable objetivo y en base a las correlaciones observadas en el gráfico del punto 2 escoja al menos dos atributos para usarlos como variables predictoras para el modelo.
 
-Pista: https://www.rdocumentation.org/packages/lessR/versions/1.9.8/topics/reg
-
 Nota: Al crear el modelo utilice el conjunto de datos de entrenamiento definido en el punto 3.
+
 
 ```{r}
 
@@ -179,33 +176,36 @@ Nota: Al crear el modelo utilice el conjunto de datos de entrenamiento definido 
 ```
 
 
+5. Realice predicciones utilizando el conjunto de pruebas y evalue el resultado con la métrica MSE.
+
+  Se puede observar que para los datos de prueba, en la mayoria de los casos las predicciones se aproximan al valor real, idealmente deberian estar lo mas cercano posible a la recta en morado. 
 
 ```{r}
   predicted_data  <- predict(line_model, test_data)
-  predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
-
+  predicts_real <- data.frame(cbind(real_value=test_data$mpg, predicted_value = predicted_data, difference = abs(test_data$mpg- predicted_data)))
+  plot(predicts_real$real_value, predicts_real$predicted_value, xlim = c(10, 45), ylim = c(10, 45))
+  abline(a = 0, b = 1, col = "purple", lwd = 4)
+  
 ```
 
 
-
-5. Realice predicciones utilizando el conjunto de pruebas y evalue el resultado con la métrica MSE.
+La metrica MSE da un valor de 17.56 para este modelo.
 
 ```{r}
 mse(predicts_real$predicted,predicts_real$real)
 
-
 ```
 
 
 
+6. Opcional
+
+6.a Pruebe varios modelos que utilicen diferentes variables y comparar los resultados obtenidos
+
+6.b Investigar como implementar en R las técnicas de preprocesado y normalización vistas en clase y aplicarlas a los datos antes de pasarlos al modelo.
 
 
-
-
-
-########################################################################################################
-
-utilizando logaritmos para prodicir una distribucion mas normal
+Utilizando logaritmos en las distintas variables para tratar de generar una distribucion con mayor semejanza a la curva normal, se obserba como para las variables "hp", "weight" y "disp" se obtiene una distribucion un pococo mas lineal cuando se grafican contra el logaritmo de "mpg" en vez de contra "mpg" 
 
 
 ```{r}
@@ -238,31 +238,29 @@ utilizando logaritmos para prodicir una distribucion mas normal
 
 ```
 
+  se crea el modelo de regresion con la variable log(mpg).
 
-
-4. Cree un modelo de regresion lineal utilizando el atributo mpg como la variable objetivo y en base a las correlaciones observadas en el gráfico del punto 2 escoja al menos dos atributos para usarlos como variables predictoras para el modelo.
-
-Pista: https://www.rdocumentation.org/packages/lessR/versions/1.9.8/topics/reg
-
-Nota: Al crear el modelo utilice el conjunto de datos de entrenamiento definido en el punto 3.
 
 ```{r}
 line_model <- lm(log(mpg) ~ hp + weight, data = training_data)
 ```
 
 
+Se grafican los datos que se predijeron contra los datos reales, de igual manera se nota una dispersion semejante a la del metodo anterior.
 
 
 ```{r}
 predicted_data  <- predict(line_model, test_data)
 predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_data)))
 
-plot(predicts_real)
+plot(predicts_real, xlim = c(10, 45), ylim = c(10, 45))
+abline(a = 0, b = 1, col = "purple", , lwd = 4)
+
 ```
 
 
 
-5. Realice predicciones utilizando el conjunto de pruebas y evalue el resultado con la métrica MSE.
+Sin embargo la métrica MSE arroja un resultado ligeramente mejor.
 
 ```{r}
 mse(predicts_real$predicted,predicts_real$real)
@@ -270,29 +268,14 @@ mse(predicts_real$predicted,predicts_real$real)
 
 ```
 
-
-
-
-6. Opcional
-
-6.a Pruebe varios modelos que utilicen diferentes variables y comparar los resultados obtenidos
-
-6.b Investigar como implementar en R las técnicas de preprocesado y normalización vistas en clase y aplicarlas a los datos antes de pasarlos al modelo.
-
-
-#############################################################################
-
+Utilizando diversas variables y distintos procesados a las mismas, se obtienen metricas muy semejantes, como se puede observar a continuacion.
 
 
 
 ```{r}
-line_model <- lm(mpg ~ hp + weight + disp, 
-                 data = training_data)
-
-predicted_data  <- predict(line_model, 
-                           test_data)
-predicts_real <- data.frame(cbind(real=test_data$mpg, 
-                                  predicted = predicted_data))
+line_model <- lm(mpg ~ hp + weight + disp, data = training_data)
+predicted_data  <- predict(line_model, test_data)
+predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = predicted_data))
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
@@ -390,20 +373,4 @@ predicts_real <- data.frame(cbind(real=test_data$mpg, predicted = exp(predicted_
 mse(predicts_real$predicted,predicts_real$real)
 
 ```
-
-
-
-```{r}
-plot(autos$disp, autos$mpg)
-plot(log(autos$disp), autos$mpg)
-plot(autos$disp, log(autos$mpg))
-plot(log(autos$disp), log(autos$mpg))
-
-plot(sqrt(autos$disp), sqrt(autos$mpg))
-
-
-```
-
-
-
 
