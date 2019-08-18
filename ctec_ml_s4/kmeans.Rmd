@@ -76,25 +76,79 @@ summary(Wholesale)
 4. Utilizando barplot cree un gráfico de los atributos del dataset, observe las correlaciones entre atributos
 
 ```{r}
-# Escriba su código aqui
+hist(Wholesale$Fresh)
+boxplot(Wholesale$Fresh)
+```
 
+```{r}
+hist(Wholesale$Milk)
+boxplot(Wholesale$Milk)
+```
 
+```{r}
+hist(Wholesale$Grocery)
+boxplot(Wholesale$Grocery)
+```
+
+```{r}
+hist(Wholesale$Frozen)
+boxplot(Wholesale$Frozen)
+```
+
+```{r}
+hist(Wholesale$Detergents_Paper)
+boxplot(Wholesale$Detergents_Paper)
+```
+
+```{r}
+hist(Wholesale$Delicassen)
+boxplot(Wholesale$Delicassen)
+```
+
+```{r}
+ggpairs(Wholesale[-c(1, 2)], progress = F)
+```
+
+```{r}
+ggpairs(Wholesale[c(1, 2)], progress = F)
 ```
 
 5. Explique el siguiente gráfico
 
+La funcion melt() deja las variables tipo factor 
+```{r}
+melted_data <- melt(Wholesale)
+glimpse(melted_data)
+```
+
+El siguiente grafico muestra las ventas de los productos para cada canal, son los boxplot que muestran las distribucion de ventas de cada producto para los Caneles HoReCa y Retail.
+
 ```{r}
 #Grafico
-bxplt <- ggplot(data = melt(Wholesale), aes(x= variable, y = value))
+bxplt <- ggplot(data = melted_data, aes(x= variable, y = value))
 bxplt <- bxplt + geom_boxplot()
 bxplt <- bxplt + facet_wrap(~Channel)
 bxplt <- bxplt + coord_flip()
 bxplt <- bxplt + labs(x = 'producto', y  = 'ventas')
-bxplt <- bxplt + ggtitle('Ventas por producto y por canal')
+bxplt <- bxplt + ggtitle('Ventas por Producto y Canal')
 bxplt
 
-# Escriba su código aqui
 ```
+
+de manera semejante, este grafico muestra la distribucion de ventas de productos para cada Region (Lisbon, Oporto y Otras)
+
+```{r}
+#Grafico
+bxplt2 <- ggplot(data = melted_data, aes(x= variable, y = value))
+bxplt2 <- bxplt2 + geom_boxplot()
+bxplt2 <- bxplt2 + facet_wrap(~Region)
+bxplt2 <- bxplt2 + coord_flip()
+bxplt2 <- bxplt2 + labs(x = 'producto', y  = 'ventas')
+bxplt2 <- bxplt2 + ggtitle('Ventas por Producto y Region')
+bxplt2
+
+```
+
 
 6. Cree un modelo de agrupación K- Means
 Para agrupar a los clientes con base al consumo, vamos a utilizar solo las variables Fresh, Milk, Grocery, Frozen, Detergents_Paper y Delicassen. En este caso, vamos a intentar agrupar los clientes en 5 grupos diferentes.
