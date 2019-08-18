@@ -44,13 +44,77 @@ Wholesale$Channel <- factor(Wholesale$Channel,
 Wholesale$Region <- factor(Wholesale$Region, 
                           levels = c(1, 2, 3), 
                           labels = c("Lisbon", "Oporto", "Other")) 
+
+
 ```
 
+Observamdo la variable Fresh, tenemos algunos valores muy elevados que probablemente no representan a la mayoria de las compras, por lo cual se decide remover los valores mayores a 60000
+
+```{r}
+boxplot(Wholesale$Fresh)
+```
+
+
+de igual manera con la variable Milk, se liminan los valores mayores a 50000
+
+```{r}
+boxplot(Wholesale$Milk)
+```
+
+de Grecery los mayores a 50000
+
+```{r}
+boxplot(Wholesale$Grocery)
+```
+
+De Frozen los mayores a 30000
+
+```{r}
+boxplot(Wholesale$Frozen)
+```
+
+De detergents los mayores a 30000
+
+```{r}
+boxplot(Wholesale$Detergents_Paper)
+```
+
+de delicatessen los mayores a 10000
+
+```{r}
+boxplot(Wholesale$Delicassen)
+```
+
+```{r}
+elements_before <- length(Wholesale$Channel)
+
+Wholesale <- Wholesale %>% 
+  filter (Fresh < 60000, 
+          Milk < 50000,
+          Grocery < 50000,
+          Frozen < 30000,
+          Detergents_Paper < 30000,
+          Delicassen < 10000) 
+
+elements_after <- length(Wholesale$Channel)
+elements_deleted <- elements_before - elements_after
+percent_deleted = 100 * elements_deleted / elements_before
+```
+
+Se puede observar que se eliminaron 14 filas
+```{r}
+elements_deleted
+```
+Que representan el 3.18% de los datos originales 
+
+```{r}
+percent_deleted
+```
 
 
 3. Desarolle el Entendimiento de los Datos
 
-Se tienen 440 observaciones de 8 variables (2 factor y 6 numericas)
+Se tienen 426 observaciones de 8 variables (2 factor y 6 numericas)
 
 ```{r}
 glimpse(Wholesale)
@@ -105,6 +169,12 @@ hist(Wholesale$Delicassen)
 boxplot(Wholesale$Delicassen)
 ```
 
+
+Del siguiente plot podemos observar que las corelaciones mas altas las tenemos entre:
+  Groceries - Milk
+  Groceries - Detergent_Paper
+  Milk - Detergent_Paper
+
 ```{r}
 ggpairs(Wholesale[-c(1, 2)], progress = F)
 ```
@@ -115,7 +185,7 @@ ggpairs(Wholesale[c(1, 2)], progress = F)
 
 5. Explique el siguiente gráfico
 
-La funcion melt() deja las variables tipo factor 
+La funcion melt() deja las variables tipo factor y de las demas crea una sola columna "variable" tipo factor con el nombre y una columna "value" con el valor
 ```{r}
 melted_data <- melt(Wholesale)
 glimpse(melted_data)
@@ -129,13 +199,13 @@ bxplt <- ggplot(data = melted_data, aes(x= variable, y = value))
 bxplt <- bxplt + geom_boxplot()
 bxplt <- bxplt + facet_wrap(~Channel)
 bxplt <- bxplt + coord_flip()
-bxplt <- bxplt + labs(x = 'producto', y  = 'ventas')
+bxplt <- bxplt + labs(x = 'Producto', y  = 'Ventas')
 bxplt <- bxplt + ggtitle('Ventas por Producto y Canal')
 bxplt
 
 ```
 
-De manera semejante, este grafico muestra la distribucion de ventas de productos para cada Region (Lisbon, Oporto y Otras)
+De manera semejante, el siguiente grafico muestra la distribucion de ventas de productos para cada Region (Lisbon, Oporto y Otras)
 
 ```{r}
 #Grafico
@@ -156,7 +226,7 @@ Para agrupar a los clientes con base al consumo, vamos a utilizar solo las varia
 
 ```{r}
 #5 Centroides utilizando k-means
-set.seed(1)
+set.seed(0)
 modelo.agrupacion <- kmeans(Wholesale[,c(3:8)], centers = 5)
 
 #predecir utilizando el modelo para agregar una variable nueva llamada 'cluster' al conjunto de datos
@@ -170,8 +240,7 @@ Wholesale_resumed <- Wholesale %>%
           cluster = cluster) %>% 
   select(cluster, sales)  
 
-plot(Wholesale_resumed, 
-     col = Wholesale_resumed$cluster)
+plot(Wholesale_resumed)
 
 ```
 
@@ -184,7 +253,7 @@ plot(Wholesale_resumed,
 ```{r}
 # Escriba su código aqui
 #Explicacion de los grupos generados
-#by(Wholesale, Wholesale$cluster, summary)
+by(Wholesale, Wholesale$cluster, summary)
 ```
 
 
