@@ -14,7 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Librerias
 ```{r}
-library('ggplot2')
+#library('ggplot2')
+library(tidyverse)
+library(GGally)
+library(reshape2)   # for melt function
 ```
 
 1. Desarolle el Análisis del Problema
@@ -28,32 +31,67 @@ https://archive.ics.uci.edu/ml/datasets/Wholesale+customers
 2. Cargue el archivo Wholesale customers data.csv en una variable
 
 ```{r}
-# Escriba su código aqui
+
+Wholesale <- data.frame(read.csv("Wholesale.csv"))
 ```
+
+Se pasan las variables nominales a factor con sus respectivas etiquetas segun la documentacion de la pagina web.
+
+```{r}
+Wholesale$Channel <- factor(Wholesale$Channel, 
+                          levels = c(1, 2), 
+                          labels = c("HoReCa", "Retail")) 
+Wholesale$Region <- factor(Wholesale$Region, 
+                          levels = c(1, 2, 3), 
+                          labels = c("Lisbon", "Oporto", "Other")) 
+```
+
+
 
 3. Desarolle el Entendimiento de los Datos
 
+Se tienen 440 observaciones de 8 variables (2 factor y 6 numericas)
+
 ```{r}
-# Escriba su código aqui
+glimpse(Wholesale)
 ```
+
+Revisando los NAs (en la pagina decia que no habian), se corrobora la no existencia de NA.
+
+```{r}
+sum(is.na.data.frame(Wholesale))
+
+```
+
+
+Informacion acerca de la distribucion de los datos en la tabla
+
+```{r}
+summary(Wholesale)
+```
+
+
+
 
 4. Utilizando barplot cree un gráfico de los atributos del dataset, observe las correlaciones entre atributos
 
 ```{r}
 # Escriba su código aqui
+
+
 ```
 
 5. Explique el siguiente gráfico
 
 ```{r}
 #Grafico
-#bxplt <- ggplot(data = melt(Wholesale), aes(x= variable, y = value))
-#bxplt <- bxplt + geom_boxplot()
-#bxplt <- bxplt + facet_wrap(~Channel)
-#bxplt <- bxplt + coord_flip()
-#bxplt <- bxplt + labs(x = 'producto', y  = 'ventas')
-#bxplt <- bxplt + ggtitle('Ventas por producto y por canal')
-#bxplt
+bxplt <- ggplot(data = melt(Wholesale), aes(x= variable, y = value))
+bxplt <- bxplt + geom_boxplot()
+bxplt <- bxplt + facet_wrap(~Channel)
+bxplt <- bxplt + coord_flip()
+bxplt <- bxplt + labs(x = 'producto', y  = 'ventas')
+bxplt <- bxplt + ggtitle('Ventas por producto y por canal')
+bxplt
 
 # Escriba su código aqui
 ```
