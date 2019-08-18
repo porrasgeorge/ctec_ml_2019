@@ -135,7 +135,7 @@ bxplt
 
 ```
 
-de manera semejante, este grafico muestra la distribucion de ventas de productos para cada Region (Lisbon, Oporto y Otras)
+De manera semejante, este grafico muestra la distribucion de ventas de productos para cada Region (Lisbon, Oporto y Otras)
 
 ```{r}
 #Grafico
@@ -155,16 +155,23 @@ Para agrupar a los clientes con base al consumo, vamos a utilizar solo las varia
 
 
 ```{r}
-# Escriba su código aqui
-
 #5 Centroides utilizando k-means
-#modelo.agrupacion <- kmeans(Wholesale[,c(3:8)], centers = 5)
+set.seed(1)
+modelo.agrupacion <- kmeans(Wholesale[,c(3:8)], centers = 5)
 
 #predecir utilizando el modelo para agregar una variable nueva llamada 'cluster' al conjunto de datos
-#Wholesale$cluster <- modelo.agrupacion$cluster
+Wholesale$cluster <- modelo.agrupacion$cluster
 
 #convertir la variable nueva a un factor
-#Wholesale$cluster <- factor(Wholesale$cluster)
+Wholesale$cluster <- factor(Wholesale$cluster)
+
+Wholesale_resumed <- Wholesale %>% 
+  mutate (sales = Delicassen + Detergents_Paper + Frozen + Fresh + Grocery + Milk, 
+          cluster = cluster) %>% 
+  select(cluster, sales)  
+
+plot(Wholesale_resumed, 
+     col = Wholesale_resumed$cluster)
 
 ```
 
