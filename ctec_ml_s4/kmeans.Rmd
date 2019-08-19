@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Tarea 4.
 # Metodos no supervisados
 
-# Ejercicios 
+# Jorge Porras Araya
 
 Librerias
 ```{r}
@@ -21,9 +21,28 @@ library(reshape2)   # for melt function
 ```
 
 1. Desarolle el Análisis del Problema
-```{r}
-# Construya el análisis del problema
-```
+
+  Desarrollar el analisis por medio de kMeans del dataset Wholesale, que se refiere a las ventas de un distribuidos medidas en unidades monetarias (mu) para diversas categorias de productos.
+  
+  El dataset cuenta con las siguientes columnas
+  
+1)	FRESH: annual spending (m.u.) on fresh products (Continuous); 
+
+2)	MILK: annual spending (m.u.) on milk products (Continuous);
+
+3)	GROCERY: annual spending (m.u.)on grocery products (Continuous);
+
+4)	FROZEN: annual spending (m.u.)on frozen products (Continuous) 
+
+5)	DETERGENTS_PAPER: annual spending (m.u.) on detergents and paper products (Continuous)
+
+6)	DELICATESSEN: annual spending (m.u.)on and delicatessen products (Continuous); 
+
+7)	CHANNEL: customersâ€™ Channel - Horeca (Hotel/Restaurant/CafÃ©) or Retail channel (Nominal) 
+
+8)	REGION: customersâ€™ Region â€“ Lisbon, Oporto or Other (Nominal) 
+
+
 Fuente del dataset:
 https://archive.ics.uci.edu/ml/datasets/Wholesale+customers
 
@@ -61,7 +80,7 @@ de igual manera con la variable Milk, se liminan los valores mayores a 50000
 boxplot(Wholesale$Milk)
 ```
 
-de Grecery los mayores a 50000
+de Grocery los mayores a 50000
 
 ```{r}
 boxplot(Wholesale$Grocery)
@@ -179,6 +198,9 @@ Del siguiente plot podemos observar que las corelaciones mas altas las tenemos e
 ggpairs(Wholesale[-c(1, 2)], progress = F)
 ```
 
+
+Se puede notar que la mayor parte de las ventas se encuentran en el Channel HoReCa y en la region Others
+
 ```{r}
 ggpairs(Wholesale[c(1, 2)], progress = F)
 ```
@@ -227,46 +249,220 @@ Para agrupar a los clientes con base al consumo, vamos a utilizar solo las varia
 ```{r}
 #5 Centroides utilizando k-means
 set.seed(0)
-modelo.agrupacion <- kmeans(Wholesale[,c(3:8)], centers = 5)
-
-#predecir utilizando el modelo para agregar una variable nueva llamada 'cluster' al conjunto de datos
-Wholesale$cluster <- modelo.agrupacion$cluster
-
-#convertir la variable nueva a un factor
+modelo_agrupacion_5c <- kmeans(Wholesale[,c(3:8)], centers = 5)
+Wholesale$cluster <- modelo_agrupacion_5c$cluster
 Wholesale$cluster <- factor(Wholesale$cluster)
-
-Wholesale_resumed <- Wholesale %>% 
-  mutate (sales = Delicassen + Detergents_Paper + Frozen + Fresh + Grocery + Milk, 
-          cluster = cluster) %>% 
-  select(cluster, sales)  
-
-plot(Wholesale_resumed)
-
 ```
+
+En los siguientes graficos se podran observar los agrupamientos entre variables, dichos agrupamientos se van a ver en 2 dimensiones, mientras que los datos tienen 6 dimensiones, debido a ello los clusters se puenden traslapar en cualquiera de los graficos pues no se estan tomando en cuenta las 4 dimensiones faltantes.
+
+```{r}
+sp_fresh_milk <- ggplot(Wholesale, aes(Fresh, Milk))
+sp_fresh_milk <- sp_fresh_milk + geom_point(aes(color = Wholesale$cluster))
+sp_fresh_milk 
+```
+
+
+
+```{r}
+sp_fresh_grocery <- ggplot(Wholesale, aes(Fresh, Grocery))
+sp_fresh_grocery <- sp_fresh_grocery + geom_point(aes(color = Wholesale$cluster))
+sp_fresh_grocery 
+```
+
+
+
+```{r}
+sp_fresh_frozen <- ggplot(Wholesale, aes(Fresh, Frozen))
+sp_fresh_frozen <- sp_fresh_frozen + geom_point(aes(color = Wholesale$cluster))
+sp_fresh_frozen 
+```
+
+
+
+
+```{r}
+sp_fresh_det <- ggplot(Wholesale, aes(Fresh, Detergents_Paper))
+sp_fresh_det <- sp_fresh_det + geom_point(aes(color = Wholesale$cluster))
+sp_fresh_det 
+```
+
+
+
+```{r}
+sp_fresh_deli <- ggplot(Wholesale, aes(Fresh, Delicassen))
+sp_fresh_deli <- sp_fresh_deli + geom_point(aes(color = Wholesale$cluster))
+sp_fresh_deli 
+```
+
+
+
+
+```{r}
+sp_milk_groc <- ggplot(Wholesale, aes(Milk, Grocery))
+sp_milk_groc <- sp_milk_groc + geom_point(aes(color = Wholesale$cluster))
+sp_milk_groc 
+```
+
+
+```{r}
+sp_milk_frozen <- ggplot(Wholesale, aes(Milk, Frozen))
+sp_milk_frozen <- sp_milk_frozen + geom_point(aes(color = Wholesale$cluster))
+sp_milk_frozen 
+```
+
+
+```{r}
+sp_milk_det <- ggplot(Wholesale, aes(Milk, Detergents_Paper))
+sp_milk_det <- sp_milk_det + geom_point(aes(color = Wholesale$cluster))
+sp_milk_det 
+```
+
+
+
+```{r}
+sp_milk_delic <- ggplot(Wholesale, aes(Milk, Delicassen))
+sp_milk_delic <- sp_milk_delic + geom_point(aes(color = Wholesale$cluster))
+sp_milk_delic 
+```
+
+
+```{r}
+sp_groc_frozen <- ggplot(Wholesale, aes(Grocery, Frozen))
+sp_groc_frozen <- sp_groc_frozen + geom_point(aes(color = Wholesale$cluster))
+sp_groc_frozen 
+```
+
+
+```{r}
+sp_groc_det <- ggplot(Wholesale, aes(Grocery, Detergents_Paper))
+sp_groc_det <- sp_groc_det + geom_point(aes(color = Wholesale$cluster))
+sp_groc_det 
+```
+
+
+
+```{r}
+sp_groc_delic <- ggplot(Wholesale, aes(Grocery, Delicassen))
+sp_groc_delic <- sp_groc_delic + geom_point(aes(color = Wholesale$cluster))
+sp_groc_delic 
+```
+
+
+```{r}
+sp_frozen_det <- ggplot(Wholesale, aes(Frozen, Detergents_Paper))
+sp_frozen_det <- sp_frozen_det + geom_point(aes(color = Wholesale$cluster))
+sp_frozen_det 
+```
+
+
+```{r}
+sp_frozen_delic <- ggplot(Wholesale, aes(Frozen, Delicassen))
+sp_frozen_delic <- sp_frozen_delic + geom_point(aes(color = Wholesale$cluster))
+sp_frozen_delic 
+```
+
+
+```{r}
+sp_det_delic <- ggplot(Wholesale, aes(Detergents_Paper, Delicassen))
+sp_det_delic <- sp_det_delic + geom_point(aes(color = Wholesale$cluster))
+sp_det_delic 
+```
+
 
 6. Realice al menos 3 modelos cambiando los centroides 
+
+
+
 ```{r}
-# Escriba su código aqui
+set.seed(0)
+modelo_agrupacion_3c <- kmeans(Wholesale[,c(3:8)], centers = 3)
+Wholesale$cluster2 <- modelo_agrupacion_3c$cluster
+Wholesale$cluster2 <- factor(Wholesale$cluster2)
 ```
+
+Cambiando los centroides se puede observar una agrupacion diferente de los datos, en el siguiente grafico se utilizan 3 centroides.
+
+```{r}
+sp_fresh_milk <- ggplot(Wholesale, aes(Fresh, Milk))
+sp_fresh_milk <- sp_fresh_milk + geom_point(aes(color = Wholesale$cluster2))
+sp_fresh_milk 
+```
+
+
+```{r}
+set.seed(0)
+modelo_agrupacion_4c <- kmeans(Wholesale[,c(3:8)], centers = 4)
+Wholesale$cluster3 <- modelo_agrupacion_4c$cluster
+Wholesale$cluster3 <- factor(Wholesale$cluster3)
+```
+Utilizando 4 centroides se tiene
+
+```{r}
+sp_fresh_milk <- ggplot(Wholesale, aes(Fresh, Milk))
+sp_fresh_milk <- sp_fresh_milk + geom_point(aes(color = Wholesale$cluster3))
+sp_fresh_milk 
+```
+
 
 7. Evaluacioón del modelo
+
+A cuantinuacion las evaluaciones de cada uno de los 3 modelos desarrollados, con 5, 3 y 4 centroides respectivamente 
+
 ```{r}
-# Escriba su código aqui
-#Explicacion de los grupos generados
-by(Wholesale, Wholesale$cluster, summary)
+by(Wholesale[,c(1:8, 9)], Wholesale$cluster, summary)
+
+
 ```
 
 
+
+```{r}
+by(Wholesale[,c(1:8, 10)], Wholesale$cluster2, summary)
+```
+
+
+```{r}
+by(Wholesale[,c(1:8, 11)], Wholesale$cluster3, summary)
+```
+
+
+
+A continuacion un grafico que muestra las ventas de cada uno de los productos en los distintos clusters
+
+```{r}
+promedios <- Wholesale %>% group_by(cluster) %>% 
+  summarise(Fresh = mean(Fresh), 
+            Milk = mean(Milk), 
+            Grocery = mean(Grocery), 
+            Frozen = mean(Frozen),
+            Detergents_Paper = mean(Detergents_Paper),
+            Delicassen = mean(Delicassen))
+
+prom_melt <- melt(promedios, id.vars = "cluster")
+
+g_prom <- ggplot(prom_melt, 
+                 aes(x = variable, 
+                     y = value, 
+                     fill = cluster)) + 
+  geom_bar(stat = "identity", 
+           position = position_dodge())
+
+g_prom 
+
+
+```
+
 8. Desarolle al menos 5 conclusiones sobre los grupos realizados
-  * Ejemplo:
-    - Las principales características de cada grupo son:
-      - #### Grupo #1: (2do grupo más pequeño)
-      - Principalmente observaciones de la región 3 y el canal 1.
-      - Muy alto consumo de productos frescos.
-      - Bajo consumo de leche.
-      - Bajo consumo de comestibles.
-      - Alto consumo de alimentos congelados.
-      - Bajo consumo de detergentes.
-      - Bajo consumo de delicassen.
 
-
+  El mayor consumo se tiene en el grupo 5, variable Fresh
+  
+  El menor consumo se tiene en el grupo 5, variable Detergents_Paper
+  
+  En promedio el consumo de delicatessen es el menor comparado con los demas productos
+  
+  El grupo 3 tiene altos consumos de Milk, Grocery y Detergent_Paper.
+  
+  En promedio el consumo de fresh es mas alto que los demas productos.
+  
+  
