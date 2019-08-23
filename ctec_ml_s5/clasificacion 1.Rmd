@@ -31,7 +31,131 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepi
 1. Cargue el archivo agaricus_lepiota.data.csv en una variable
 
 ```{r}
-# Escriba su código aqui
+agaricus <- read.csv("agaricus-lepiota.data", header = F)
+names(agaricus) <- c("class", 
+                     "cap_shape",
+                     "cap_surface",
+                     "cap_color",
+                     "bruises",
+                     "odor",
+                     "gill_attachment",
+                     "gill_spacing",
+                     "gill_size",
+                     "gill_color",
+                     "stalk_shape",
+                     "stalk_root",
+                     "stalk_surface_above_ring",
+                     "stalk_surface_below_ring",
+                     "stalk_color_above_ring",
+                     "stalk_color_below_ring",
+                     "veil_type",
+                     "veil_color",
+                     "ring_number",
+                     "ring_type",
+                     "spore_print_color",
+                     "population",
+                     "habitat")
+
+
+agaricus$class <- factor(agaricus$class, 
+                         levels = c("e", "p"),
+                         labels = c("edible","poisonous"))
+
+agaricus$cap_shape <- factor(agaricus$cap_shape, 
+                            levels = c("b", "c", "f", "k", "s", "x"),
+                            labels = c("bell","conical","flat", "knobbed", "sunken", "convex"))
+
+agaricus$cap_surface <- factor(agaricus$cap_surface, 
+                               levels = c("f", "g", "s", "y"),
+                               labels = c("fibrous","grooves","smooth","scaly"))
+
+agaricus$cap_color <- factor(agaricus$cap_color,
+                             levels = c("b", "c", "e", "g", "n", "p", "r", "u", "w", "y"),
+                             labels = c("buff", "cinnamon", "red", "gray", "brown", "pink", "green", "purple", "white", "yellow"))
+
+agaricus$bruises <- factor(agaricus$bruises,
+                           levels = c("f", "t"),
+                           labels = c("false", "true"))
+
+
+agaricus$odor <- factor(agaricus$odor,
+                             levels = c("a", "c", "f", "l", "m", "n", "p", "s", "y"),
+                             labels = c("almond", "creosote", "foul", "anise", "musty", "none", "pungent",
+                                        "spicy", "fishy"))
+
+agaricus$gill_attachment <- factor(agaricus$gill_attachment, 
+                               levels = c("a", "f"),
+                               labels = c("attached", "free"))
+
+agaricus$gill_spacing <- factor(agaricus$gill_spacing, 
+                               levels = c("c", "w"),
+                               labels = c("close", "crowded"))
+
+agaricus$gill_size <- factor(agaricus$gill_size, 
+                               levels = c("b", "n"),
+                               labels = c("broad", "narrow"))
+
+agaricus$gill_color <- factor(agaricus$gill_color,
+                             levels = c("b", "e", "g", "h", "k", "n", "o", "p", "r", "u", "w", "y"),
+                             labels = c("buff", "red", "gray", "chocolate", "black", "brown", "orange", "pink",
+                                        "green","purple", "white", "yellow"))
+
+agaricus$stalk_shape <- factor(agaricus$stalk_shape, 
+                               levels = c("e", "t"),
+                               labels = c("enlarging", "tapering"))
+
+agaricus$stalk_root <- factor(agaricus$stalk_root, 
+                               levels = c("?", "b", "c", "e", "r"),
+                               labels = c("Not Available", "bulbous", "club", "equal", "rooted"))
+
+agaricus$stalk_surface_above_ring <- factor(agaricus$stalk_surface_above_ring, 
+                               levels = c("f", "k", "s", "y"),
+                               labels = c("fibrous", "silky", "smooth", "scaly"))
+
+agaricus$stalk_surface_below_ring <- factor(agaricus$stalk_surface_below_ring, 
+                               levels = c("f", "k", "s", "y"),
+                               labels = c("fibrous", "silky", "smooth", "scaly"))
+
+agaricus$stalk_color_above_ring <- factor(agaricus$stalk_color_above_ring, 
+                               levels = c("b", "c", "e", "g", "n", "o", "p", "w", "y"),
+                               labels = c("buff", "cinnamon", "red", "gray", "brown", "orange", "pink",
+                                          "white", "yellow"))
+
+agaricus$stalk_color_below_ring <- factor(agaricus$stalk_color_below_ring, 
+                               levels = c("b", "c", "e", "g", "n", "o", "p", "w", "y"),
+                               labels = c("buff", "cinnamon", "red", "gray", "brown", "orange", "pink",
+                                          "white", "yellow"))
+
+agaricus$veil_type <- factor(agaricus$veil_type, 
+                               levels = c("p", "u"),
+                               labels = c("partial", "universal"))
+
+agaricus$veil_color <- factor(agaricus$veil_color, 
+                               levels = c("n", "o", "w", "y"),
+                               labels = c("brown", "orange", "white", "yellow"))
+
+agaricus$ring_number <- factor(agaricus$ring_number, 
+                               levels = c("n", "o", "t"),
+                               labels = c("none", "one", "two"))
+
+agaricus$ring_type <- factor(agaricus$ring_type, 
+                               levels = c("e", "f", "l", "n", "p"),
+                               labels = c("evanescent", "flaring", "large", "none", "pendant"))
+
+agaricus$spore_print_color <- factor(agaricus$spore_print_color, 
+                               levels = c("b", "h", "k", "n", "o", "r", "u", "w", "y"),
+                               labels = c("buff", "chocolate", "black", "brown", "orange","green",
+                                          "purple", "white", "yellow"))
+
+agaricus$population <- factor(agaricus$population, 
+                               levels = c("a", "c", "n", "s", "v", "y"),
+                               labels = c("abundant", "clustered", "numerous", "scattered", "several", "solitary"))
+
+agaricus$habitat <- factor(agaricus$habitat, 
+                               levels = c("d", "g", "l", "m", "p", "u", "w"),
+                               labels = c("woods", "grasses", "leaves", "meadows", "paths", "urban", "waste"))
+
+
 ```
 
 2. Desarolle el Entendimiento de los Datos
