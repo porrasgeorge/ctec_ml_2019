@@ -15,6 +15,8 @@ Librerias
 library(caTools)
 library(rpart)
 library(randomForest)
+library(tidyverse)
+library(GGally)
 ```
 
 1. Desarolle el Análisis del Problema
@@ -31,7 +33,7 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepi
 1. Cargue el archivo agaricus_lepiota.data.csv en una variable
 
 ```{r}
-agaricus <- read.csv("agaricus-lepiota.data", header = F)
+agaricus <- read.csv("agaricus-lepiota.data", header = F, na.strings = "?")
 names(agaricus) <- c("class", 
                      "cap_shape",
                      "cap_surface",
@@ -71,12 +73,12 @@ agaricus$cap_surface <- factor(agaricus$cap_surface,
 
 agaricus$cap_color <- factor(agaricus$cap_color,
                              levels = c("b", "c", "e", "g", "n", "p", "r", "u", "w", "y"),
-                             labels = c("buff", "cinnamon", "red", "gray", "brown", "pink", "green", "purple", "white", "yellow"))
+                             labels = c("buff", "cinnamon", "red", "gray", "brown", "pink", "green",
+                                        "purple", "white", "yellow"))
 
 agaricus$bruises <- factor(agaricus$bruises,
                            levels = c("f", "t"),
                            labels = c("false", "true"))
-
 
 agaricus$odor <- factor(agaricus$odor,
                              levels = c("a", "c", "f", "l", "m", "n", "p", "s", "y"),
@@ -105,8 +107,8 @@ agaricus$stalk_shape <- factor(agaricus$stalk_shape,
                                labels = c("enlarging", "tapering"))
 
 agaricus$stalk_root <- factor(agaricus$stalk_root, 
-                               levels = c("?", "b", "c", "e", "r"),
-                               labels = c("Not Available", "bulbous", "club", "equal", "rooted"))
+                               levels = c("b", "c", "e", "r"),
+                               labels = c("bulbous", "club", "equal", "rooted"))
 
 agaricus$stalk_surface_above_ring <- factor(agaricus$stalk_surface_above_ring, 
                                levels = c("f", "k", "s", "y"),
@@ -155,25 +157,72 @@ agaricus$habitat <- factor(agaricus$habitat,
                                levels = c("d", "g", "l", "m", "p", "u", "w"),
                                labels = c("woods", "grasses", "leaves", "meadows", "paths", "urban", "waste"))
 
+```
+
+
+## revisando el numero de NA en la columna stalk_root, este coincide con el del enunciado (2480)
+
+```{r}
+sum(is.na(agaricus$stalk_root))
 
 ```
 
-2. Desarolle el Entendimiento de los Datos
+## y en todo el dataframe el numero es el mismo, por lo que no hay mas NAs
+
 
 ```{r}
-# Escriba su código aqui
+sum(is.na(agaricus))
+
+```
+
+
+
+2. Desarolle el Entendimiento de los Datos
+
+
+
+
+```{r}
+visdat::vis_dat(agaricus)
+levels(agaricus$stalk_root)
+
 ```
 
 3. Utilizando barplot cree un gráfico de los atributos del dataset, observe las correlaciones entre atributos
 
 ```{r}
-# Escriba su código aqui
+bp_1 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_root))
+bp_2 <- ggplot(data=agaricus) + geom_bar(aes(x=cap_shape))
+bp_3 <- ggplot(data=agaricus) + geom_bar(aes(x=cap_surface))
+bp_4 <- ggplot(data=agaricus) + geom_bar(aes(x=cap_color))
+bp_5 <- ggplot(data=agaricus) + geom_bar(aes(x=bruises))
+bp_6 <- ggplot(data=agaricus) + geom_bar(aes(x=odor))
+bp_7 <- ggplot(data=agaricus) + geom_bar(aes(x=gill_attachment))
+bp_8 <- ggplot(data=agaricus) + geom_bar(aes(x=gill_spacing))
+bp_9 <- ggplot(data=agaricus) + geom_bar(aes(x=gill_size))
+bp_10 <- ggplot(data=agaricus) + geom_bar(aes(x=gill_color))
+bp_11 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_shape))
+bp_12 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_root))
+bp_13 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_surface_above_ring))
+bp_14 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_surface_below_ring))
+bp_15 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_color_above_ring))
+bp_16 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_color_below_ring))
+bp_17 <- ggplot(data=agaricus) + geom_bar(aes(x=veil_type))
+bp_18 <- ggplot(data=agaricus) + geom_bar(aes(x=veil_color))
+bp_19 <- ggplot(data=agaricus) + geom_bar(aes(x=ring_number))
+bp_20 <- ggplot(data=agaricus) + geom_bar(aes(x=ring_type))
+bp_21 <- ggplot(data=agaricus) + geom_bar(aes(x=spore_print_color))
+bp_22 <- ggplot(data=agaricus) + geom_bar(aes(x=population))
+bp_23 <- ggplot(data=agaricus) + geom_bar(aes(x=habitat))
+
+
 ```
 
 
 4. Realice al menos 3 modelos vistos en clase
 ```{r}
-# Escriba su código aqui
+
+
 ```
 
 5. Evaluación del modelo
