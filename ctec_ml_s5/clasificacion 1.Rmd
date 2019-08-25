@@ -191,7 +191,7 @@ levels(agaricus$stalk_root)
 3. Utilizando barplot cree un gráfico de los atributos del dataset, observe las correlaciones entre atributos
 
 ```{r}
-bp_1 <- ggplot(data=agaricus) + geom_bar(aes(x=stalk_root))
+bp_1 <- ggplot(data=agaricus) + geom_bar(aes(x=class))
 bp_2 <- ggplot(data=agaricus) + geom_bar(aes(x=cap_shape))
 bp_3 <- ggplot(data=agaricus) + geom_bar(aes(x=cap_surface))
 bp_4 <- ggplot(data=agaricus) + geom_bar(aes(x=cap_color))
@@ -215,19 +215,151 @@ bp_21 <- ggplot(data=agaricus) + geom_bar(aes(x=spore_print_color))
 bp_22 <- ggplot(data=agaricus) + geom_bar(aes(x=population))
 bp_23 <- ggplot(data=agaricus) + geom_bar(aes(x=habitat))
 
+bp_1
+bp_2
+bp_3
+bp_4
+bp_5
+bp_6
+bp_7
+bp_8
+bp_9
+bp_10
+bp_11
+bp_12
+bp_13
+bp_14
+bp_15
+bp_16
+bp_17
+bp_18
+bp_19
+bp_20
+bp_21
+bp_22
+bp_23
+
+
+```
+
+de la informacion que se puede observar en los graficos anteriores, un detalle interesante es que en la variable "veil_type" (boxplot 17), todas las observaciones son "partial", o sea esta variable no aporta informacion util para un modelo pues un valor constante.
+
+
+```{r}
+levels(agaricus$veil_type)
+length(agaricus$veil_type != "partial")
+sum(agaricus$veil_type != "partial")
+sum(agaricus$veil_type == "partial")
+
+```
+
+ademas en el vis_dat se puede observar que existen una cantidad importante de NAs en la variable "stalk_root"
+(poco mas de un 30% de los datos de la variable)
+
+```{r}
+100 * sum(is.na(agaricus$stalk_root)) / length(agaricus$stalk_root)
+```
+
+dado los puntos anteriores, se elimina la variable  "veil_type" y "stalk root" (pues random forest no permite NA)
+
+```{r}
+agaricus <- agaricus %>% select(c(-veil_type))
+agaricus <- agaricus %>% select(c(-stalk_root))
+# agaricus <- agaricus %>% select(c(-gill_attachment))
+# agaricus <- agaricus %>% select(c(-veil_color))
+# agaricus <- agaricus %>% select(c(-ring_number))
+glimpse(agaricus) 
+```
+
+se realiza la distribucion del conjunto de datos en datos de prueba y de entrenamiento.
+
+```{r}
+set.seed(123456789)
+split_var <- sample.split(agaricus$class, SplitRatio = 0.7)
+agaricus_training <- agaricus[split_var,]
+agaricus_test <- agaricus[!split_var,]
+```
+
+se prueban que los tamanos sean acorde a los valores dados, donde se comprueba que el 70% de los datos esta en el set de entrenamiento y 30% en el de pruebas
+
+```{r}
+100 * length(agaricus_training$class) / length(agaricus$class)
+100 * length(agaricus_test$class) / length(agaricus$class)
+
+```
+
+y se puede comprobar que ademas la disribucion fue muy pareja en cuanto a la variable class para ambos set de datos
+
+```{r}
+bp_tr1 <- ggplot(data=agaricus_training) + geom_bar(aes(x=class))
+bp_te1 <- ggplot(data=agaricus_test) + geom_bar(aes(x=class))
+
+bp_tr1
+bp_te1
 
 ```
 
 
 4. Realice al menos 3 modelos vistos en clase
-```{r}
 
+
+
+# Iniciando por el modelo de arbol de desiciones y se comprueba que el modelo es de clase rpart
+
+```{r}
+model_tree <- rpart(class ~ ., data = agaricus_training, method = "class" )
+class(model_tree)
 
 ```
 
-5. Evaluación del modelo
+Evaluación del modelo
+
+de la informacion obtenida de este modelo, se puede observar un punto muy importante, el modelo se corrio con varias semillas y siempre acertó perfectamente cuando los hongos eran venenosos, pero no así cuando eran comestibles, si este modelo se piensa utilizar unicamente para detectar hongos venenosos entonces esta muy bien, pero si es para detectar hongos comestibles (que se podrian utilizar en alimentacion) entonces hay un problema, pues el modelo da como comestibles algunos hongos que en realidad son venenosos 
+
 ```{r}
-# Escriba su código aqui
+predicted_model_tree <- predict(model_tree, newdata = agaricus_test, type = "class")
+table(agaricus_test$class,predicted_model_tree)
+
+```
+
+
+
+
+# Para el modelo Random Forest
+
+
+```{r}
+model_rForest <- randomForest(class ~ ., data = agaricus_training)
+
+```
+
+A diferencia del modelo anterior, para este caso y probando varias semillas, random forest ha acertado todo el set de pruebas, sin fallar en ninguna prediccion (con los datos que se han probado hasta el).
+
+```{r}
+predicted_model_rForest <- predict(model_rForest, newdata = agaricus_test, type = "class")
+table(agaricus_test$class,predicted_model_rForest)
+
+```
+
+
+# Para el modelo de Regresion Logistica
+
+```{r}
+model_rLogist <- glm(class ~ cap_shape + 
+                       cap_surface + 
+                       bruises + 
+                       odor +  
+                       gill_spacing + 
+                       gill_size  + 
+                       gill_color + 
+                       habitat, 
+                     data = agaricus_training, family = binomial)
+
+```
+
+```{r}
+predicted_model_rLogist <- predict(model_rLogist, newdata = agaricus_test, type = "response")
+table(agaricus_test$class,predicted_model_rLogist > 0.5)
 
 ```
 
