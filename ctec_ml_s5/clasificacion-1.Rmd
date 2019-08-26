@@ -265,9 +265,6 @@ dado los puntos anteriores, se elimina la variable  "veil_type" y "stalk root" (
 ```{r}
 agaricus <- agaricus %>% select(c(-veil_type))
 agaricus <- agaricus %>% select(c(-stalk_root))
-# agaricus <- agaricus %>% select(c(-gill_attachment))
-# agaricus <- agaricus %>% select(c(-veil_color))
-# agaricus <- agaricus %>% select(c(-ring_number))
 glimpse(agaricus) 
 ```
 
@@ -307,7 +304,9 @@ bp_te1
 # Iniciando por el modelo de arbol de desiciones y se comprueba que el modelo es de clase rpart
 
 ```{r}
-model_tree <- rpart(class ~ ., data = agaricus_training, method = "class" )
+model_tree <- rpart(class ~ ., 
+                    data = agaricus_training, 
+                    method = "class" )
 class(model_tree)
 
 ```
@@ -317,8 +316,11 @@ Evaluación del modelo
 de la informacion obtenida de este modelo, se puede observar un punto muy importante, el modelo se corrio con varias semillas y siempre acertó perfectamente cuando los hongos eran venenosos, pero no así cuando eran comestibles, si este modelo se piensa utilizar unicamente para detectar hongos venenosos entonces esta muy bien, pero si es para detectar hongos comestibles (que se podrian utilizar en alimentacion) entonces hay un problema, pues el modelo da como comestibles algunos hongos que en realidad son venenosos 
 
 ```{r}
-predicted_model_tree <- predict(model_tree, newdata = agaricus_test, type = "class")
-table(agaricus_test$class,predicted_model_tree)
+predicted_model_tree <- predict(model_tree, 
+                                newdata = agaricus_test, 
+                                type = "class")
+table(agaricus_test$class,
+      predicted_model_tree)
 
 ```
 
@@ -336,13 +338,18 @@ model_rForest <- randomForest(class ~ ., data = agaricus_training)
 A diferencia del modelo anterior, para este caso y probando varias semillas, random forest ha acertado todo el set de pruebas, sin fallar en ninguna prediccion (con los datos que se han probado hasta el).
 
 ```{r}
-predicted_model_rForest <- predict(model_rForest, newdata = agaricus_test, type = "class")
-table(agaricus_test$class,predicted_model_rForest)
+predicted_model_rForest <- predict(model_rForest, 
+                                   newdata = agaricus_test, 
+                                   type = "class")
+table(agaricus_test$class,
+      predicted_model_rForest)
 
 ```
 
 
 # Para el modelo de Regresion Logistica
+
+Este modelo le es mas dificil trabajr con tantos parametros, por lo que hubo que escoger cuales podrian generar un mejor resultado 
 
 ```{r}
 model_rLogist <- glm(class ~ cap_shape + 
@@ -353,18 +360,154 @@ model_rLogist <- glm(class ~ cap_shape +
                        gill_size  + 
                        gill_color + 
                        habitat, 
-                     data = agaricus_training, family = binomial)
+                     data = agaricus_training, 
+                     family = binomial)
 
 ```
 
 ```{r}
-predicted_model_rLogist <- predict(model_rLogist, newdata = agaricus_test, type = "response")
-table(agaricus_test$class,predicted_model_rLogist > 0.5)
+predicted_model_rLogist <- predict(model_rLogist, 
+                                   newdata = agaricus_test, 
+                                   type = "response")
+table(agaricus_test$class,
+      predicted_model_rLogist > 0.5)
 
 ```
 
 
 8. Desarolle al menos 3 conclusiones sobre las clasificaciones de los modelos
 
+  Para este ejemplo y con las semillas estudiadas, Random Forest tuvo siempre la mayor cantidad de aciertos.
+  
+  Regresion Logistica tiene dificultades trabajando con muchas variables
+  
+  Las predicciones de arboles de desicion son muy buenas, sin embargo tiene una ligera tendencia hacia los Falsos negativos (Predice No Venenosas cuando en pocos casos si lo eran)
 
 
+# Realizando 100 pruebas
+
+
+Si se realiza todo el procedimiento 100, se crean 100 sets de entrenamiento y se corre todo otra vez para cada uno de los modelos (con el mismo dataset en cada prueba), se tiene lo siguiente
+
+
+```{r}
+
+seed_vect = seq(1, 300, 3) 
+tamanho = length(seed_vect)
+fn_t_results <- rep(0, tamanho)
+fp_t_results <- rep(0, tamanho)
+fn_rf_results <- rep(0, tamanho)
+fp_rf_results <- rep(0, tamanho)
+fn_rl_results <- rep(0, tamanho)
+fp_rl_results <- rep(0, tamanho)
+
+start_time <- Sys.time()
+
+for (i in 1:tamanho){
+  set.seed(seed_vect[i])
+  split_var <- sample.split(agaricus$class, 
+                            SplitRatio = 0.7)
+  agaricus_training <- agaricus[split_var,]
+  agaricus_test <- agaricus[!split_var,]
+  
+
+# para regresion logistica
+  
+  model_tree <- rpart(class ~ ., 
+                    data = agaricus_training, 
+                    method = "class" )
+  predicted_model_tree <- predict(model_tree, 
+                                  newdata = agaricus_test, 
+                                  type = "class")
+  t_pred <- table(agaricus_test$class, 
+                  predicted_model_tree)
+  fn_t_results[i] <- t_pred[2,1]
+  fp_t_results[i] <- t_pred[1,2]
+
+  
+# para random Forest  
+  model_rForest <- randomForest(class ~ ., data = agaricus_training)
+  predicted_model_rForest <- predict(model_rForest, 
+                                   newdata = agaricus_test, 
+                                   type = "class")
+  rf_pred <- table(agaricus_test$class,
+          predicted_model_rForest)
+  
+  fn_rf_results[i] <- rf_pred[2,1]
+  fp_rf_results[i] <- rf_pred[1,2]
+
+# para regresion logistica
+  
+  model_rLogist <- glm(class ~ cap_surface + 
+                       bruises + 
+                       odor +  
+                       gill_spacing + 
+                       gill_size  + 
+                       gill_color + 
+                       habitat, 
+                     data = agaricus_training, 
+                     family = binomial)
+  
+  predicted_model_rLogist <- predict(model_rLogist, 
+                                   newdata = agaricus_test, 
+                                   type = "response")
+  rl_pred <- table(agaricus_test$class,
+      predicted_model_rLogist > 0.5)
+
+    fn_rl_results[i] <- rl_pred[2,1]
+    fp_rl_results[i] <- rl_pred[1,2]
+    
+}
+
+end_time <- Sys.time()
+end_time - start_time
+
+```
+
+El promedio de falsos negativos para los modelos "arbol de desicion", "Random Forest" y "Regresion Logistica" son respectivamente de: 
+
+```{r}
+  print(mean(fn_t_results))
+  print(mean(fn_rf_results))
+  print(mean(fn_rl_results))
+  
+
+```
+El maximo de falsos negativos para los modelos "arbol de desicion", "Random Forest" y "Regresion Logistica" son respectivamente de:
+
+```{r}
+  print(max(fn_t_results))
+  print(max(fn_rf_results))
+  print(max(fn_rl_results))
+  
+```
+El minimo de falsos negativos para los modelos "arbol de desicion", "Random Forest" y "Regresion Logistica" son respectivamente de:
+
+```{r}
+  print(min(fn_t_results))
+  print(min(fn_rf_results))
+  print(min(fn_rl_results))
+```
+El promedio de falsos positivos para los modelos "arbol de desicion", "Random Forest" y "Regresion Logistica" son respectivamente de:
+
+```{r}
+  print(mean(fp_t_results))
+  print(mean(fp_rf_results))
+  print(mean(fp_rl_results))
+```
+El maximo de falsos positivos para los modelos "arbol de desicion", "Random Forest" y "Regresion Logistica" son respectivamente de:
+```{r}
+  print(max(fp_t_results))
+  print(max(fp_rf_results))
+  print(max(fp_rl_results))
+```
+El minimo de falsos positivos para los modelos "arbol de desicion", "Random Forest" y "Regresion Logistica" son respectivamente de:
+```{r}
+  print(min(fp_t_results))
+  print(min(fp_rf_results))
+  print(min(fp_rl_results))
+```
+
+
+
+# Lo cual lleva a la conclusion que para este set de datos el metodo que mejor predijo es "Random Forest" (pues no sequivoco en ninguna prediccion de las 100 veces que se corrio), lugo seguido de "regresion logistica" y por ultimo "arboles de decision"  
