@@ -14,6 +14,8 @@ Librerias
 ```{r}
 library(caTools)
 library(rpart)
+library(tidyverse)
+library(GGally)
 #..........Librerias de los modelos
 ```
 
@@ -36,19 +38,138 @@ http://datosabiertos.csv.go.cr/dashboards/19683/accidentes/
 1. Cargue el archivo nombre.csv en una variable
 
 ```{r}
-# Escriba su c?digo aqui
+datos <- read.csv("temp_5571830814335439232.csv", header = T)
+
+
 ```
 
 2. Desarolle el Entendimiento de los Datos
 
+Todos los datos son factores a excepcion de A_Persona
 ```{r}
-# Escriba su c?digo aqui
+glimpse(datos)
+
 ```
+
+se puede observar que los datos en la columna A_Persona es siempre 1, 
+para todas las 158399 observaciones, por lo que se puede eliminar
+
+```{r}
+table(datos[1])
+datos[1] <- NULL
+```
+
+Se modifican algunos nombres de columnas para eliminar tildes y otros
+
+```{r}
+names(datos)
+names(datos)[2] <- "Tipo_Lesion"
+names(datos)[4] <- "Edad_quinquenal"
+names(datos)[6] <- "Anho"
+names(datos)[8] <- "Dia"
+names(datos)[10] <- "Canton"
+names(datos)[12] <- "Dia_2"
+names(datos)[13] <- "Mes_2"
+names(datos)[14] <- "Edad_quinquenal_2"
+datos$Edad <- as.integer(as.character(datos$Edad))
+
+glimpse(datos)
+class(datos$Edad)
+
+```
+
+comparando los datos de las 2 columnas de EdadQuinquenal, se puede observar que son identicas, lo unico que varia es el nombre de la etiqueta, por lo que se puede eliminar una de ellas.
+
+Eso se puede deducir pues la comparacion de ellas forman una matriz diagonal (aunque en distorsionada debido al ordenamiento alfabetico de las etiquetas)
+
+```{r}
+table(datos$Edad_quinquenal, datos$Edad_quinquenal_2)
+
+```
+
+Lo mismo del punto anterior ocurre con la columna Dia.
+
+```{r}
+table(datos$Dia, datos$Dia_2)
+```
+
+Lo mismo del punto tras-anterior ocurre con la columna Mes.
+
+```{r}
+table(datos$Mes, datos$Mes_2)
+
+```
+
+```{r}
+datos$Edad_quinquenal_2 <- NULL
+datos$Dia_2 <- NULL
+datos$Mes_2 <- NULL
+
+glimpse(datos)
+
+```
+
+
+
+```{r}
+ggpairs(datos[c(1, 2)])
+
+
+
+```
+
+
+Edad_quinquenal es una clasificacion de edad, donde se agrupa de 5 en 5 años. se puede dejar pues quiza algun metodo funcione mejor con ella, sin embargo considero que se deberia usar o una o la otra
+
+
 
 3. Utilizando barplot cree un gr?fico de los atributos del dataset, observe las correlaciones entre atributos
 
 ```{r}
-# Escriba su c?digo aqui
+Rol_Lesion <- table(datos$Rol, datos$Tipo_Lesion)
+
+
+
+gg_formato <- geom_bar(stat = "count",
+                       width = 0.7,
+                       fill = "steelblue")
+gg_tipo <- theme(
+  axis.text.x = element_text(
+    face = "bold",
+    color = "#993333",
+    size = 8,
+    angle = 90
+  ),
+  axis.text.y = element_text(face = "bold",
+                             color = "blue",
+                             size = 10)
+)
+
+
+ggplot(datos, aes(x = Rol)) + gg_formato + gg_tipo
+ggplot(datos, aes(x = Tipo_Lesion)) + gg_formato + gg_tipo
+#ggplot(datos, aes(x = Edad)) + gg_formato + gg_tipo
+hist(datos$Edad, col = "steelblue")
+ggplot(datos, aes(x = Edad_quinquenal)) + gg_formato + gg_tipo
+ggplot(datos, aes(x = Sexo)) + gg_formato + gg_tipo
+ggplot(datos, aes(x = Anho)) + gg_formato + gg_tipo
+ggplot(datos, aes(x = Mes)) + gg_formato + gg_tipo
+ggplot(datos, aes(x = Dia)) + gg_formato + gg_tipo
+ggplot(datos, aes(x = Provincia)) + gg_formato + gg_tipo
+#ggplot(datos, aes(x = Canton)) + gg_formato + gg_tipo
+
+```
+
+
+```{r}
+
+t1 <- table(datos$Rol,datos$Tipo_Lesion)
+plot(t1)
+t2 <- as_tibble(t1)
+length(t2)
+t2
+
+
 ```
 
 
