@@ -16,6 +16,10 @@ library(caTools)
 library(rpart)
 library(tidyverse)
 library(GGally)
+library(visdat)
+library(rpart.plot)
+library(pROC)
+
 #..........Librerias de los modelos
 ```
 
@@ -38,7 +42,7 @@ http://datosabiertos.csv.go.cr/dashboards/19683/accidentes/
 1. Cargue el archivo nombre.csv en una variable
 
 ```{r}
-datos <- read.csv("temp_5571830814335439232.csv", header = T)
+datos <- read.csv("temp_5571830814335439232.csv", header = T, na.strings = c("Desconocido", "Desconocida"))
 
 
 ```
@@ -111,14 +115,6 @@ glimpse(datos)
 
 
 
-```{r}
-ggpairs(datos[c(1, 2)])
-
-
-
-```
-
-
 Edad_quinquenal es una clasificacion de edad, donde se agrupa de 5 en 5 años. se puede dejar pues quiza algun metodo funcione mejor con ella, sin embargo considero que se deberia usar o una o la otra
 
 
@@ -127,8 +123,6 @@ Edad_quinquenal es una clasificacion de edad, donde se agrupa de 5 en 5 años. s
 
 ```{r}
 Rol_Lesion <- table(datos$Rol, datos$Tipo_Lesion)
-
-
 
 gg_formato <- geom_bar(stat = "count",
                        width = 0.7,
@@ -145,10 +139,8 @@ gg_tipo <- theme(
                              size = 10)
 )
 
-
 ggplot(datos, aes(x = Rol)) + gg_formato + gg_tipo
 ggplot(datos, aes(x = Tipo_Lesion)) + gg_formato + gg_tipo
-#ggplot(datos, aes(x = Edad)) + gg_formato + gg_tipo
 hist(datos$Edad, col = "steelblue")
 ggplot(datos, aes(x = Edad_quinquenal)) + gg_formato + gg_tipo
 ggplot(datos, aes(x = Sexo)) + gg_formato + gg_tipo
@@ -156,32 +148,94 @@ ggplot(datos, aes(x = Anho)) + gg_formato + gg_tipo
 ggplot(datos, aes(x = Mes)) + gg_formato + gg_tipo
 ggplot(datos, aes(x = Dia)) + gg_formato + gg_tipo
 ggplot(datos, aes(x = Provincia)) + gg_formato + gg_tipo
-#ggplot(datos, aes(x = Canton)) + gg_formato + gg_tipo
-
 ```
 
 
+# Se quiere determinar si dadas las caracteristicas de un accidente, se tienen muertos o heridos graves
+
 ```{r}
 
-t1 <- table(datos$Rol,datos$Tipo_Lesion)
-plot(t1)
-t2 <- as_tibble(t1)
-length(t2)
-t2
+cosevi <- datos %>% 
+  mutate(HayHerido = as.factor(ifelse(!Tipo_Lesion %in% c("Ileso"), "Si", "No"))) %>%
+  select(HayHerido, Rol, Edad_quinquenal, Sexo, Dia) %>%
+  filter(!is.na(Sexo), !is.na(Edad_quinquenal))
 
+glimpse(cosevi)
+sum(is.na(cosevi))
 
+```
+
+# Datos de entrenamiento y prueba
+
+```{r}
+set.seed(123456789)
+split_var <- sample.split(cosevi$HayHerido, SplitRatio = 0.7)
+cosevi_training <- cosevi[split_var,]
+cosevi_test <- cosevi[!split_var,]
+```
+
+Revisando la distribucion de los datos
+
+```{r}
+100 * nrow(cosevi_training) / nrow(cosevi)
+100 * nrow(cosevi_test) / nrow(cosevi)
+```
+
+Revisando la distribucion de los datos, como era de esperar, el 70% de los datos con la etiqueta Grave o muerto == si va para el training,
+lo mismo pasa con los datos con la etiqueta == NO
+
+o sea sample.split trata de dividir cada una de las etiquetas en 70% training y 30% test.
+
+```{r}
+100 * sum(cosevi_training$HayHerido == "Si") / sum(cosevi$HayHerido == "Si")
+100 * sum(cosevi_test$HayHerido == "Si") / sum(cosevi$HayHerido == "Si")
+
+100 * sum(cosevi_training$HayHerido == "No") / sum(cosevi$HayHerido == "No")
+100 * sum(cosevi_test$HayHerido == "No") / sum(cosevi$HayHerido == "No")
 ```
 
 
 4. Realice al menos 5 modelos de los observados en clase
+
+Arbol de decision
+
 ```{r}
-# Escriba su c?digo aqui
+Arbol_modelo <- rpart(formula = HayHerido ~ ., 
+                      data = cosevi_training, 
+                      method = "class")
+
+rpart.plot(Arbol_modelo)
+
+
 ```
+
+
+```{r}
+
+predicted_Arbol_modelo <- predict(Arbol_modelo, 
+                                newdata = cosevi_test, 
+                                type = "class",
+                                )
+tabla <- table(cosevi_test$HayHerido,
+      predicted_Arbol_modelo)
+
+tabla
+
+```
+
+
+
+
 
 5. Evaluaci?n de los modelos
 ```{r}
-# Escriba su c?digo aqui
+plot(predicted_Arbol_modelo, cosevi_test$HayHerido)
 
+library(PRROC)
+
+PRROC_obj <- roc.curve(scores.class0 = predicted_Arbol_modelo, weights.class0 = cosevi_test$HayHerido,
+                       curve=TRUE)
+plot(PRROC_obj)
 ```
 
 
