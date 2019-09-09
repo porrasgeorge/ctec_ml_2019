@@ -18,7 +18,8 @@ library(tidyverse)
 library(GGally)
 library(visdat)
 library(rpart.plot)
-library(pROC)
+library(ROCR)
+library(randomForest)
 
 #..........Librerias de los modelos
 ```
@@ -156,7 +157,7 @@ ggplot(datos, aes(x = Provincia)) + gg_formato + gg_tipo
 ```{r}
 
 cosevi <- datos %>% 
-  mutate(HayHerido = as.factor(ifelse(!Tipo_Lesion %in% c("Ileso"), "Si", "No"))) %>%
+  mutate(HayHerido = as.logical(ifelse(!Tipo_Lesion %in% c("Ileso"), T, F))) %>%
   select(HayHerido, Rol, Edad_quinquenal, Sexo, Dia) %>%
   filter(!is.na(Sexo), !is.na(Edad_quinquenal))
 
@@ -187,56 +188,118 @@ lo mismo pasa con los datos con la etiqueta == NO
 o sea sample.split trata de dividir cada una de las etiquetas en 70% training y 30% test.
 
 ```{r}
-100 * sum(cosevi_training$HayHerido == "Si") / sum(cosevi$HayHerido == "Si")
-100 * sum(cosevi_test$HayHerido == "Si") / sum(cosevi$HayHerido == "Si")
+100 * sum(cosevi_training$HayHerido == T) / sum(cosevi$HayHerido == T)
+100 * sum(cosevi_test$HayHerido == T) / sum(cosevi$HayHerido == T)
 
-100 * sum(cosevi_training$HayHerido == "No") / sum(cosevi$HayHerido == "No")
-100 * sum(cosevi_test$HayHerido == "No") / sum(cosevi$HayHerido == "No")
+100 * sum(cosevi_training$HayHerido == F) / sum(cosevi$HayHerido == F)
+100 * sum(cosevi_test$HayHerido == F) / sum(cosevi$HayHerido == F)
 ```
 
 
 4. Realice al menos 5 modelos de los observados en clase
 
-Arbol de decision
+
+
+## Arbol de decision
 
 ```{r}
-Arbol_modelo <- rpart(formula = HayHerido ~ ., 
+cosevi_Arbol_model <- rpart(formula = HayHerido ~ ., 
                       data = cosevi_training, 
                       method = "class")
 
-rpart.plot(Arbol_modelo)
+rpart.plot(cosevi_Arbol_model)
 
 
 ```
 
 
 ```{r}
+predicted_Arbol_modelo <- predict(cosevi_Arbol_model,
+                                newdata = cosevi_test,
+                                type = "class")
 
-predicted_Arbol_modelo <- predict(Arbol_modelo, 
-                                newdata = cosevi_test, 
-                                type = "class",
-                                )
-tabla <- table(cosevi_test$HayHerido,
-      predicted_Arbol_modelo)
+data <- table(cosevi_test$HayHerido, predicted_Arbol_modelo)
+print(data)
 
-tabla
+prediccionesROC = prediction(c(predicted_Arbol_modelo), 
+                             c(cosevi_test$HayHerido))
+
+
 
 ```
-
-
-
-
-
-5. Evaluaci?n de los modelos
+Area bajo la curva
 ```{r}
-plot(predicted_Arbol_modelo, cosevi_test$HayHerido)
+as.numeric(performance(prediccionesROC, "auc")@y.values)
 
-library(PRROC)
-
-PRROC_obj <- roc.curve(scores.class0 = predicted_Arbol_modelo, weights.class0 = cosevi_test$HayHerido,
-                       curve=TRUE)
-plot(PRROC_obj)
 ```
+
+Curva ROC
+
+```{r}
+
+plot(performance(prediccionesROC, "tpr", "fpr"),
+     colorize = T,
+     print.cutoffs.at = seq(0,1,by = 0.1),
+     text.adj = c(-0.2,1.7),
+     main = 'Curva ROC del modelo')
+```
+
+
+
+## Random Forest
+
+
+```{r}
+set.seed(12321)
+ # modelo.bosque <- randomForest(HayHerido ~ .,
+ #                              data = cosevi_training)
+
+```
+
+```{r}
+predicciones.bosque <- predict(modelo.bosque, 
+                               newdata = cosevi_test, 
+                               type = "class")
+
+prediccionesRandomForest = prediction(c(predicciones.bosque), 
+                             c(cosevi_test$HayHerido))
+
+
+
+```
+
+Area bajo la curva
+```{r}
+as.numeric(performance(prediccionesRandomForest, "auc")@y.values)
+
+```
+
+## Regresion Logistica
+
+```{r}
+cosevi_LR_model <- glm(HayHerido ~ .,
+                       data = cosevi_training,
+                       family = binomial)
+
+predicciones_LR <- predict(cosevi_LR_model, 
+                           newdata = cosevi_test, 
+                           type = 'response')
+
+data <- table(cosevi_test$HayHerido, predicciones_LR >= 0.6)
+data
+
+
+predicciones_LR_ROCR = prediction(c(predicciones_LR), 
+                             c(cosevi_test$HayHerido))
+```
+
+
+Area bajo la curva
+```{r}
+as.numeric(performance(predicciones_LR_ROCR, "auc")@y.values)
+
+```
+
 
 
 6. Desarolle al menos 5 conclusiones sobre las clasificaciones de los modelos
