@@ -20,6 +20,7 @@ library(visdat)
 library(rpart.plot)
 library(ROCR)
 library(randomForest)
+library(neuralnet)
 
 #..........Librerias de los modelos
 ```
@@ -221,7 +222,7 @@ predicted_Arbol_modelo <- predict(cosevi_Arbol_model,
 data <- table(cosevi_test$HayHerido, predicted_Arbol_modelo)
 print(data)
 
-prediccionesROC = prediction(c(predicted_Arbol_modelo), 
+prediccionesROC <- ROCR::prediction(c(predicted_Arbol_modelo), 
                              c(cosevi_test$HayHerido))
 
 
@@ -251,8 +252,8 @@ plot(performance(prediccionesROC, "tpr", "fpr"),
 
 ```{r}
 set.seed(12321)
- # modelo.bosque <- randomForest(HayHerido ~ .,
- #                              data = cosevi_training)
+ modelo.bosque <- randomForest(HayHerido ~ .,
+                              data = cosevi_training)
 
 ```
 
@@ -261,7 +262,7 @@ predicciones.bosque <- predict(modelo.bosque,
                                newdata = cosevi_test, 
                                type = "class")
 
-prediccionesRandomForest = prediction(c(predicciones.bosque), 
+prediccionesRandomForest = ROCR::prediction(c(predicciones.bosque), 
                              c(cosevi_test$HayHerido))
 
 
@@ -289,7 +290,7 @@ data <- table(cosevi_test$HayHerido, predicciones_LR >= 0.6)
 data
 
 
-predicciones_LR_ROCR = prediction(c(predicciones_LR), 
+predicciones_LR_ROCR = ROCR::prediction(c(predicciones_LR), 
                              c(cosevi_test$HayHerido))
 ```
 
@@ -301,8 +302,54 @@ as.numeric(performance(predicciones_LR_ROCR, "auc")@y.values)
 ```
 
 
+## 
+
+```{r}
+
+t1 <- Sys.time()
+
+cosevi_training2 <- cosevi_training
+
+cosevi_modMatrix <- model.matrix( 
+   ~HayHerido + . ,
+  data = cosevi_training2 
+)
+
+colnames(cosevi_modMatrix)<-str_replace_all(colnames(cosevi_modMatrix), c(" " = "." ,
+                                                                          "," = "", 
+                                                                          "Ã±" = "", 
+                                                                          "Ã³" = "",
+                                                                          "Ãº" = "",
+                                                                          "Ã©" = "",
+                                                                          "Ã¡" = ""))
+
+
+colnames(cosevi_modMatrix)
+
+nombresColumnas <- paste(colnames(cosevi_modMatrix[,3:33]))
+
+formula <- reformulate(nombresColumnas, "HayHeridoTRUE")
+
+set.seed(123)
+cosevi_nn_model <- neuralnet(formula,
+                             data = cosevi_modMatrix,
+                             hidden = 1,
+                             rep = 1,
+                             linear.output = T)
+
+t2 <- Sys.time()
+t2 - t1
+
+
+# 
+# plot(nn)
+# predicciones.red <- neuralnet::compute(crx.fit, mp[,c("V1b","V2")])
+
+```
 
 6. Desarolle al menos 5 conclusiones sobre las clasificaciones de los modelos
+
+
 
 
 
