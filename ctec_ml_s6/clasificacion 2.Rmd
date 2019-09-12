@@ -14,6 +14,7 @@ Librerias
 ```{r}
 library(caTools)
 library(rpart)
+library(stringr)
 library(tidyverse)
 library(GGally)
 library(visdat)
@@ -21,6 +22,7 @@ library(rpart.plot)
 library(ROCR)
 library(randomForest)
 library(neuralnet)
+library(readr)
 
 #..........Librerias de los modelos
 ```
@@ -44,16 +46,37 @@ http://datosabiertos.csv.go.cr/dashboards/19683/accidentes/
 1. Cargue el archivo nombre.csv en una variable
 
 ```{r}
-datos <- read.csv("temp_5571830814335439232.csv", header = T, na.strings = c("Desconocido", "Desconocida"))
+# cosevi_datos <- read.csv("temp_5571830814335439232.csv", 
+#                   header = T, 
+#                   na.strings = c("Desconocido", "Desconocida"), 
+#                   fileEncoding = "UTF-8-BOM")
+# 
 
+cosevi_datos <- read_file("temp_5571830814335439232.csv")
+
+# quitar espacios y Ñ
+cosevi_datos <- str_replace_all(cosevi_datos, c(" " = "_", "ñ" = "nh"))
+
+# eliminar acentos del español
+cosevi_datos <- iconv(cosevi_datos, from = "UTF-8", to = "ASCII//TRANSLIT")
+
+
+# lectura en una tabla y colocacion de NAs
+cosevi_datos <- read.table(textConnection(cosevi_datos), 
+                 sep = ",",
+                 header = T, 
+                 na.strings = c("Desconocido", "Desconocida"))
+
+
+class(cosevi_datos)
 
 ```
 
 2. Desarolle el Entendimiento de los Datos
 
-Todos los datos son factores a excepcion de A_Persona
+Todos los datos son factores a excepcion de A_Persona y edad
 ```{r}
-glimpse(datos)
+glimpse(cosevi_datos)
 
 ```
 
@@ -61,27 +84,8 @@ se puede observar que los datos en la columna A_Persona es siempre 1,
 para todas las 158399 observaciones, por lo que se puede eliminar
 
 ```{r}
-table(datos[1])
-datos[1] <- NULL
-```
-
-Se modifican algunos nombres de columnas para eliminar tildes y otros
-
-```{r}
-names(datos)
-names(datos)[2] <- "Tipo_Lesion"
-names(datos)[4] <- "Edad_quinquenal"
-names(datos)[6] <- "Anho"
-names(datos)[8] <- "Dia"
-names(datos)[10] <- "Canton"
-names(datos)[12] <- "Dia_2"
-names(datos)[13] <- "Mes_2"
-names(datos)[14] <- "Edad_quinquenal_2"
-datos$Edad <- as.integer(as.character(datos$Edad))
-
-glimpse(datos)
-class(datos$Edad)
-
+table(cosevi_datos$A_Persona)
+cosevi_datos$A_Persona <- NULL
 ```
 
 comparando los datos de las 2 columnas de EdadQuinquenal, se puede observar que son identicas, lo unico que varia es el nombre de la etiqueta, por lo que se puede eliminar una de ellas.
@@ -89,42 +93,39 @@ comparando los datos de las 2 columnas de EdadQuinquenal, se puede observar que 
 Eso se puede deducir pues la comparacion de ellas forman una matriz diagonal (aunque en distorsionada debido al ordenamiento alfabetico de las etiquetas)
 
 ```{r}
-table(datos$Edad_quinquenal, datos$Edad_quinquenal_2)
+table(cosevi_datos$Edad_quinquenal, cosevi_datos$Edad_quinquenal.1)
 
 ```
 
 Lo mismo del punto anterior ocurre con la columna Dia.
 
 ```{r}
-table(datos$Dia, datos$Dia_2)
+table(cosevi_datos$Dia, cosevi_datos$Dia.1 )
 ```
 
 Lo mismo del punto tras-anterior ocurre con la columna Mes.
 
 ```{r}
-table(datos$Mes, datos$Mes_2)
+table(cosevi_datos$Mes, cosevi_datos$Mes.1)
 
 ```
 
 ```{r}
-datos$Edad_quinquenal_2 <- NULL
-datos$Dia_2 <- NULL
-datos$Mes_2 <- NULL
+cosevi_datos$Edad_quinquenal.1 <- NULL
+cosevi_datos$Dia.1 <- NULL
+cosevi_datos$Mes.1 <- NULL
 
-glimpse(datos)
+glimpse(cosevi_datos)
 
 ```
 
-
-
 Edad_quinquenal es una clasificacion de edad, donde se agrupa de 5 en 5 años. se puede dejar pues quiza algun metodo funcione mejor con ella, sin embargo considero que se deberia usar o una o la otra
-
 
 
 3. Utilizando barplot cree un gr?fico de los atributos del dataset, observe las correlaciones entre atributos
 
 ```{r}
-Rol_Lesion <- table(datos$Rol, datos$Tipo_Lesion)
+Rol_Lesion <- table(cosevi_datos$Rol, cosevi_datos$Tipo_de_lesion)
 
 gg_formato <- geom_bar(stat = "count",
                        width = 0.7,
@@ -141,15 +142,15 @@ gg_tipo <- theme(
                              size = 10)
 )
 
-ggplot(datos, aes(x = Rol)) + gg_formato + gg_tipo
-ggplot(datos, aes(x = Tipo_Lesion)) + gg_formato + gg_tipo
-hist(datos$Edad, col = "steelblue")
-ggplot(datos, aes(x = Edad_quinquenal)) + gg_formato + gg_tipo
-ggplot(datos, aes(x = Sexo)) + gg_formato + gg_tipo
-ggplot(datos, aes(x = Anho)) + gg_formato + gg_tipo
-ggplot(datos, aes(x = Mes)) + gg_formato + gg_tipo
-ggplot(datos, aes(x = Dia)) + gg_formato + gg_tipo
-ggplot(datos, aes(x = Provincia)) + gg_formato + gg_tipo
+ggplot(cosevi_datos, aes(x = Rol)) + gg_formato + gg_tipo
+ggplot(cosevi_datos, aes(x = Tipo_de_lesion)) + gg_formato + gg_tipo
+hist(cosevi_datos$Edad, col = "steelblue")
+ggplot(cosevi_datos, aes(x = Edad_quinquenal)) + gg_formato + gg_tipo
+ggplot(cosevi_datos, aes(x = Sexo)) + gg_formato + gg_tipo
+ggplot(cosevi_datos, aes(x = Anho)) + gg_formato + gg_tipo
+ggplot(cosevi_datos, aes(x = Mes)) + gg_formato + gg_tipo
+ggplot(cosevi_datos, aes(x = Dia)) + gg_formato + gg_tipo
+ggplot(cosevi_datos, aes(x = Provincia)) + gg_formato + gg_tipo
 ```
 
 
@@ -157,8 +158,8 @@ ggplot(datos, aes(x = Provincia)) + gg_formato + gg_tipo
 
 ```{r}
 
-cosevi <- datos %>% 
-  mutate(HayHerido = as.logical(ifelse(!Tipo_Lesion %in% c("Ileso"), T, F))) %>%
+cosevi <- cosevi_datos %>% 
+  mutate(HayHerido = as.logical(ifelse(!Tipo_de_lesion %in% c("Ileso"), T, F))) %>%
   select(HayHerido, Rol, Edad_quinquenal, Sexo, Dia) %>%
   filter(!is.na(Sexo), !is.na(Edad_quinquenal))
 
@@ -315,13 +316,6 @@ cosevi_modMatrix <- model.matrix(
   data = cosevi_training2 
 )
 
-colnames(cosevi_modMatrix)<-str_replace_all(colnames(cosevi_modMatrix), c(" " = "." ,
-                                                                          "," = "", 
-                                                                          "Ã±" = "", 
-                                                                          "Ã³" = "",
-                                                                          "Ãº" = "",
-                                                                          "Ã©" = "",
-                                                                          "Ã¡" = ""))
 
 
 colnames(cosevi_modMatrix)
