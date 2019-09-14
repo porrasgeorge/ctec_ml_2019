@@ -23,6 +23,7 @@ library(ROCR)
 library(randomForest)
 library(neuralnet)
 library(readr)
+library(e1071)
 
 #..........Librerias de los modelos
 ```
@@ -303,22 +304,17 @@ as.numeric(performance(predicciones_LR_ROCR, "auc")@y.values)
 ```
 
 
-## 
+## con solo mil elementos da resultados identicos que con todo el dataset, y tarda 0.5 segundoa y no 8 horas que tarda con todo el dataset.
 
 ```{r}
 
 t1 <- Sys.time()
-
-cosevi_training2 <- cosevi_training
+cosevi_training2 <- cosevi_training[1:1000,]
 
 cosevi_modMatrix <- model.matrix( 
    ~HayHerido + . ,
   data = cosevi_training2 
 )
-
-
-
-colnames(cosevi_modMatrix)
 
 nombresColumnas <- paste(colnames(cosevi_modMatrix[,3:33]))
 
@@ -329,20 +325,93 @@ cosevi_nn_model <- neuralnet(formula,
                              data = cosevi_modMatrix,
                              hidden = 1,
                              rep = 1,
-                             linear.output = T)
+                             linear.output = T,
+                             threshold = 0.1)
 
 t2 <- Sys.time()
 t2 - t1
 
-
-# 
-# plot(nn)
-# predicciones.red <- neuralnet::compute(crx.fit, mp[,c("V1b","V2")])
+plot(cosevi_nn_model)
 
 ```
 
+
+```{r}
+cosevi_modMatrix_Test <- model.matrix( 
+   ~HayHerido + . ,
+  data = cosevi_test 
+)
+
+predicciones.red <- neuralnet::compute(cosevi_nn_model,cosevi_modMatrix_Test)
+predicciones.redClass = ifelse(predicciones.red$net.result >= 0.5, T, F)
+
+table(cosevi_test$HayHerido, predicciones.redClass)
+
+
+```
+
+
+
+```{r}
+
+t3 <- Sys.time()
+cosevi_svm_model <- svm(HayHerido ~ . , 
+                        data = cosevi_training2, 
+                        kernel = 'sigmoid',
+                        cross = 2, 
+                        scale = FALSE,
+                        type = "C-classification")
+
+
+t4 <- Sys.time()
+t4 - t3
+summary(cosevi_svm_model)
+```
+
+
+
+```{r}
+svm_prediccion <- predict(cosevi_svm_model, newdata = cosevi_test)
+tabla_predicciones <- table(cosevi_test$HayHerido, svm_prediccion)
+
+```
+
+
+Area bajo la curva
+```{r}
+
+prediccionesSVM = ROCR::prediction(c(svm_prediccion), 
+                             c(cosevi_test$HayHerido))
+                             
+as.numeric(performance(prediccionesSVM, "auc")@y.values)
+
+```
+
+```{r}
+sum(duplicated(cosevi))
+sum(!duplicated(cosevi))
+
+
+
+
+```
+
+
+```{r}
+cosevi %>% group_by(HayHerido, Rol, Edad_quinquenal, Sexo, Dia) %>% 
+  dplyr::summarise(count(HayHerido), 
+            first(HayHerido), 
+            first(Rol), 
+            first(Edad_quinquenal), 
+            first(Sexo), 
+            first(Dia))
+```
+
+
+
 6. Desarolle al menos 5 conclusiones sobre las clasificaciones de los modelos
 
+Todos los modelos arrojan resultados muy semejantes.
 
 
 
