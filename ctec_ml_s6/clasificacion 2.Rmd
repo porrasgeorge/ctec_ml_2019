@@ -38,8 +38,6 @@ library(e1071)
 
 #Accidente con v?ctima se refiere cuando en el accidente de tr?nsito al menos uno de los participantes resulto: herido leve, grave o fallecido.
 
-#Para m?s informaci?n revisar la metodolog?a del documento Memoria estad?stica de accidentes de tr?nsito con v?ctimas.Periodo 2012-2014.
-
 ```
 Fuente del dataset:
 http://datosabiertos.csv.go.cr/dashboards/19683/accidentes/
@@ -309,7 +307,7 @@ as.numeric(performance(predicciones_LR_ROCR, "auc")@y.values)
 ```{r}
 
 t1 <- Sys.time()
-cosevi_training2 <- cosevi_training[1:1000,]
+cosevi_training2 <- cosevi_training[1:5000,]
 
 cosevi_modMatrix <- model.matrix( 
    ~HayHerido + . ,
@@ -342,15 +340,29 @@ cosevi_modMatrix_Test <- model.matrix(
   data = cosevi_test 
 )
 
-predicciones.red <- neuralnet::compute(cosevi_nn_model,cosevi_modMatrix_Test)
-predicciones.redClass = ifelse(predicciones.red$net.result >= 0.5, T, F)
+predicciones_red <- neuralnet::compute(cosevi_nn_model,cosevi_modMatrix_Test)
+predicciones_redClass = ifelse(predicciones_red$net.result >= 0.5, T, F)
 
-table(cosevi_test$HayHerido, predicciones.redClass)
+table(cosevi_test$HayHerido, predicciones_redClass)
 
 
 ```
 
+Area bajo la curva
+```{r}
 
+predicciones_LR <- predict(predicciones_red, 
+                           newdata = cosevi_test)
+
+
+neuralnet::prediction(predicciones_red, c(cosevi_test$HayHerido))
+
+
+as.numeric(performance(predicciones_redClass, "auc")@y.values)
+
+```
+
+## SVM
 
 ```{r}
 
@@ -391,27 +403,123 @@ as.numeric(performance(prediccionesSVM, "auc")@y.values)
 sum(duplicated(cosevi))
 sum(!duplicated(cosevi))
 
-
-
-
 ```
 
+
+
+
+Modificando el dataset original
+
+
+Originalmente se tenia
 
 ```{r}
-cosevi %>% group_by(HayHerido, Rol, Edad_quinquenal, Sexo, Dia) %>% 
-  dplyr::summarise(count(HayHerido), 
-            first(HayHerido), 
-            first(Rol), 
-            first(Edad_quinquenal), 
-            first(Sexo), 
-            first(Dia))
+
+cosevi <- cosevi_datos %>% 
+  mutate(HayHerido = as.logical(ifelse(!Tipo_de_lesion %in% c("Ileso"), T, F))) %>%
+  select(HayHerido, Rol, Edad_quinquenal, Sexo) %>%
+  filter(!is.na(Sexo), !is.na(Edad_quinquenal))
+
+set.seed(123456789)
+split_var <- sample.split(cosevi$HayHerido, SplitRatio = 0.7)
+cosevi_training <- cosevi[split_var,]
+cosevi_test <- cosevi[!split_var,]
+cosevi_Arbol_model <- rpart(formula = HayHerido ~ ., 
+                      data = cosevi_training, 
+                      method = "class")
+
+predicted_Arbol_modelo <- predict(cosevi_Arbol_model,
+                                newdata = cosevi_test,
+                                type = "class")
+
+data <- table(cosevi_test$HayHerido, predicted_Arbol_modelo)
+print(data)
+
+prediccionesROC <- ROCR::prediction(c(predicted_Arbol_modelo), 
+                             c(cosevi_test$HayHerido))
+
+
+as.numeric(performance(prediccionesROC, "auc")@y.values)
+
+
 ```
 
+
+Utilizando edad en vez de edad quinquenal, todo queda igual
+```{r}
+
+cosevi <- cosevi_datos %>% 
+  mutate(HayHerido = as.logical(ifelse(!Tipo_de_lesion %in% c("Ileso"), T, F))) %>%
+  select(HayHerido, Rol, Edad, Sexo) %>%
+  filter(!is.na(Sexo),!is.na(Edad))
+
+set.seed(123456789)
+split_var <- sample.split(cosevi$HayHerido, SplitRatio = 0.7)
+cosevi_training <- cosevi[split_var,]
+cosevi_test <- cosevi[!split_var,]
+cosevi_Arbol_model <- rpart(formula = HayHerido ~ ., 
+                      data = cosevi_training, 
+                      method = "class")
+
+predicted_Arbol_modelo <- predict(cosevi_Arbol_model,
+                                newdata = cosevi_test,
+                                type = "class")
+
+data <- table(cosevi_test$HayHerido, predicted_Arbol_modelo)
+print(data)
+
+prediccionesROC <- ROCR::prediction(c(predicted_Arbol_modelo), 
+                             c(cosevi_test$HayHerido))
+
+
+as.numeric(performance(prediccionesROC, "auc")@y.values)
+
+
+```
+
+
+Aunque se incluyan todas las columnas, la unica que se toma en cuenta en la prediccion es es ROL
+
+```{r}
+
+cosevi <- cosevi_datos %>% 
+  mutate(HayHerido = as.logical(ifelse(!Tipo_de_lesion %in% c("Ileso"), T, F))) %>%
+  filter(!is.na(Sexo), !is.na(Edad))%>%
+  select(HayHerido, Rol, Edad, Sexo, Dia, Provincia, Canton, Distrito) 
+
+print(data)
+set.seed(123456789)
+split_var <- sample.split(cosevi$HayHerido, SplitRatio = 0.7)
+cosevi_training <- cosevi[split_var,]
+cosevi_test <- cosevi[!split_var,]
+cosevi_Arbol_model <- rpart(formula = HayHerido ~ ., 
+                      data = cosevi_training, 
+                      method = "class")
+
+predicted_Arbol_modelo <- predict(cosevi_Arbol_model,
+                                newdata = cosevi_test,
+                                type = "class")
+
+data <- table(cosevi_test$HayHerido, predicted_Arbol_modelo)
+
+prediccionesROC <- ROCR::prediction(c(predicted_Arbol_modelo), 
+                             c(cosevi_test$HayHerido))
+
+
+as.numeric(performance(prediccionesROC, "auc")@y.values)
+
+rpart.plot(cosevi_Arbol_model)
+
+```
 
 
 6. Desarolle al menos 5 conclusiones sobre las clasificaciones de los modelos
 
 Todos los modelos arrojan resultados muy semejantes.
+Random forest y SVM tardan mucho en ejecutarse (comparados con los demas)
+Los principales accidentes donde hay heridos lo lideran los motociclistas, varones y entre 20 y 45 anhos
+
+
 
 
 
