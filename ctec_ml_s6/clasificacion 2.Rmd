@@ -341,7 +341,7 @@ cosevi_modMatrix_Test <- model.matrix(
 )
 
 predicciones_red <- neuralnet::compute(cosevi_nn_model,cosevi_modMatrix_Test)
-predicciones_redClass = ifelse(predicciones_red$net.result >= 0.5, T, F)
+predicciones_redClass = ifelse(predicciones_red$net.result >= 0.5, 1, 0)
 
 table(cosevi_test$HayHerido, predicciones_redClass)
 
@@ -351,12 +351,14 @@ table(cosevi_test$HayHerido, predicciones_redClass)
 Area bajo la curva
 ```{r}
 
-predicciones_LR <- predict(predicciones_red, 
-                           newdata = cosevi_test)
+prediccionesROC = ROCR::prediction(c(predicciones_redClass), c(cosevi_test$HayHerido))
+as.numeric(performance(prediccionesROC, "auc")@y.values)
 
-
-neuralnet::prediction(predicciones_red, c(cosevi_test$HayHerido))
-
+plot(performance(prediccionesROC, "tpr", "fpr"),
+colorize = T,
+print.cutoffs.at = seq(0,1,by = 0.1),
+text.adj = c(-0.2,1.7),
+main = 'Curva ROC del modelo')
 
 as.numeric(performance(predicciones_redClass, "auc")@y.values)
 
@@ -391,21 +393,16 @@ tabla_predicciones <- table(cosevi_test$HayHerido, svm_prediccion)
 
 Area bajo la curva
 ```{r}
+prediccionesROC = ROCR::prediction(c(svm_prediccion), c(cosevi_test$HayHerido))
+as.numeric(performance(prediccionesROC, "auc")@y.values)
 
-prediccionesSVM = ROCR::prediction(c(svm_prediccion), 
-                             c(cosevi_test$HayHerido))
-                             
-as.numeric(performance(prediccionesSVM, "auc")@y.values)
-
-```
-
-```{r}
-sum(duplicated(cosevi))
-sum(!duplicated(cosevi))
+plot(performance(prediccionesROC, "tpr", "fpr"),
+colorize = T,
+print.cutoffs.at = seq(0,1,by = 0.1),
+text.adj = c(-0.2,1.7),
+main = 'Curva ROC del modelo')
 
 ```
-
-
 
 
 Modificando el dataset original
@@ -517,7 +514,9 @@ rpart.plot(cosevi_Arbol_model)
 
 Todos los modelos arrojan resultados muy semejantes.
 Random forest y SVM tardan mucho en ejecutarse (comparados con los demas)
-Los principales accidentes donde hay heridos lo lideran los motociclistas, varones y entre 20 y 45 anhos
+Los principales accidentes donde hay heridos lo lideran los motociclistas, varones y entre 20 y 45 anhos.
+Random tree fue ligeramente mas acertado que los demas modelos
+Para nuestro caso, al parecer la columna mas importante es el Rol, por ejemplo en el caso de Arboles de desicion es la unica columna que se toma en cuenta.
 
 
 
