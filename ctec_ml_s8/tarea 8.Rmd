@@ -16,6 +16,261 @@ Ejecuta una exploración de datos para entender bien las variables que tienes di
 
 Al final decide por 2 métodos de aprendizaje automático que son relevantes para la preguntas que quieres hacer.
 
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+```
+
+
+```{r}
+delitos_sc <- read.csv("Delitos_SC_2004_2018.csv", na.strings = c("DESCONOCIDO", "Desconocido"))
+delitos_sc <- delitos_sc[,1:9]
+delitos_sc$Fecha <- as.Date(delitos_sc$Fecha)
+glimpse(delitos_sc)
+```
+
+```{r}
+visdat::vis_dat(delitos_sc)
+```
+
+
+```{r}
+delitos_sc <- delitos_sc %>% mutate(anho = as.integer(year(Fecha)), 
+                                    mes = factor(month(Fecha)), 
+                                    dia = factor(day(Fecha)),
+                                    dow = factor(wday(Fecha)))
+#delitos_sc$Fecha <- NULL
+levels(delitos_sc$dow) <- c("Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado")
+levels(delitos_sc$mes) <- c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
+
+glimpse(delitos_sc)
+visdat::vis_dat(delitos_sc)
+
+```
+
+
+Formato para los plots
+
+```{r}
+gg_formato <- geom_bar(stat = "count",
+                       width = 0.7,
+                       fill = "steelblue")
+gg_tipo <- theme(
+  axis.text.x = element_text(
+    face = "bold",
+    color = "#993333",
+    size = 8,
+    angle = 90,
+    vjust = 0.5
+  ),
+  axis.text.y = element_text(face = "bold",
+                             color = "blue",
+                             size = 10)
+  )
+
+gg_y_etiq <- ylab("Cantidad")
+```
+
+
+
+```{r}
+# levels(delitos_sc$Delito)
+# levels(delitos_sc$SubDelito)
+# levels(delitos_sc$Hora)
+# levels(delitos_sc$Victima)
+# levels(delitos_sc$SubVictima)
+# levels(delitos_sc$Edad)
+# levels(delitos_sc$Genero)
+# levels(delitos_sc$Nacionalidad)
+```
+
+
+```{r}
+ggplot(delitos_sc, aes(x = Delito)) + gg_formato + gg_tipo + gg_y_etiq
+
+```
+
+```{r}
+ggplot(delitos_sc, aes(x = SubDelito)) + gg_formato + gg_tipo + gg_y_etiq
+
+```
+
+```{r}
+ggplot(delitos_sc, aes(x = Hora)) + gg_formato + gg_tipo + gg_y_etiq
+
+```
+
+```{r}
+ggplot(delitos_sc, aes(x = Victima)) + gg_formato + gg_tipo + gg_y_etiq
+
+```
+
+
+```{r}
+ggplot(delitos_sc, aes(x = Edad)) + gg_formato + gg_tipo + gg_y_etiq
+
+```
+
+```{r}
+ggplot(delitos_sc, aes(x = Genero)) + gg_formato + gg_tipo + gg_y_etiq
+
+```
+
+```{r}
+ggplot(delitos_sc, aes(x = Nacionalidad)) + gg_formato + gg_tipo + gg_y_etiq
+
+```
+
+
+
+```{r}
+ggplot(data = delitos_sc, aes(x = anho)) + gg_formato + gg_y_etiq
+```
+
+
+
+```{r}
+
+anho_mes_table <- data.frame(table(delitos_sc$anho, delitos_sc$mes))
+colnames(anho_mes_table)<-c("Anho", "Mes", "Cantidad")
+
+ggplot(data = anho_mes_table, aes(x = Mes, y = Cantidad, colour = Anho, group = Anho)) + 
+    geom_point() + 
+    geom_line() +
+    gg_tipo +
+    scale_y_log10()
+```
+
+
+```{r}
+ggplot(data = anho_mes_table, aes(x = Anho, y = Mes, fill = Cantidad)) + 
+    geom_tile() + 
+    scale_fill_gradient2(mid = "green", high = "red") + 
+    theme(
+  axis.text.x = element_text(
+    face = "bold",
+    color = "#993333",
+    size = 12,
+    angle = 90,
+    vjust = 0.5
+  ),
+  axis.text.y = element_text(face = "bold",
+                             color = "blue",
+                             size = 10)
+  )
+```
+
+
+```{r}
+
+anho_dia_table <- data.frame(table(delitos_sc$anho, delitos_sc$dow))
+colnames(anho_dia_table)<-c("Anho", "Dia", "Cantidad")
+
+ggplot(data = anho_dia_table, aes(x = Anho, y = Cantidad, colour = Dia, group = Dia)) + 
+    geom_point() + 
+    geom_line() +
+    gg_tipo 
+```
+
+
+```{r}
+
+dia_hora_table <- data.frame(table(delitos_sc$dow, delitos_sc$Hora))
+colnames(dia_hora_table)<-c("Dia", "Hora", "Delitos")
+
+ggplot(data = dia_hora_table, aes(x = Hora, y = Delitos, colour = Dia, group = Dia)) + 
+    geom_point() + 
+    geom_line() +
+    gg_tipo +
+    scale_y_log10()
+```
+
+```{r}
+
+anho_hora_table <- data.frame(table(delitos_sc$anho, delitos_sc$Hora))
+colnames(anho_hora_table)<-c("Anho", "Hora", "Delitos")
+
+ggplot(data = anho_hora_table, aes(x = Anho, y = Delitos, colour = Hora, group = Hora)) + 
+    geom_point() + 
+    geom_line() +
+    gg_tipo 
+```
+
+
+```{r}
+
+anho_genero_table <- data.frame(table(delitos_sc$anho, delitos_sc$Genero))
+colnames(anho_genero_table)<-c("Anho", "Genero", "Delitos")
+
+ggplot(data = anho_genero_table, aes(x = Anho, y = Delitos, colour = Genero, group = Genero)) + 
+    geom_point() + 
+    geom_line() +
+    gg_tipo 
+
+```
+
+
+
+```{r}
+
+anho_victima_table <- data.frame(table(delitos_sc$anho, delitos_sc$Victima))
+colnames(anho_victima_table)<-c("Anho", "Victima", "Delitos")
+
+ggplot(data = anho_victima_table, aes(x = Anho, y = Delitos, colour = Victima, group = Victima)) + 
+    geom_point() + 
+    geom_line() +
+    gg_tipo 
+
+```
+
+
+
+
+```{r}
+
+anho_tipodel_table <- data.frame(table(delitos_sc$anho, delitos_sc$Delito))
+colnames(anho_tipodel_table)<-c("Anho", "Delito", "Delitos")
+
+ggplot(data = anho_tipodel_table, aes(x = Anho, y = Delitos, colour = Delito, group = Delito)) + 
+    geom_point() + 
+    geom_line() +
+    gg_tipo 
+
+```
+
+
+
+
+```{r}
+
+temp <- filter(delitos_sc, Delito == "ASALTO")
+
+anho_subdel_table <- data.frame(table(temp$anho, temp$dow))
+colnames(anho_subdel_table)<-c("Anho", "Dia", "Delitos")
+
+ggplot(data = anho_subdel_table, aes(x = Anho, y = Delitos, colour = Dia, group = Dia)) + 
+    geom_point() + 
+    geom_line() +
+    ylab("Asaltos") +
+    gg_tipo
+
+
+```
+
+
+```{r}
+ggplot(delitos_sc, aes(x = SubDelito)) + 
+    gg_formato + 
+    gg_tipo + gg_y_etiq
+
+```
+
+```{r}
+ggplot(data = delitos_sc, aes(x = dia)) + gg_formato + gg_y_etiq
+```
+
+
 
 ## Desarrollo modelos
 Desarolla 2 modelos de aprendizaje automatizado (supervisado o no supervisado). Recuerda utilizar la metodologia CRISP-DM para implementar los modelos. Si buscas inspiración toma en cuenta que existe un repositorio de github https://github.com/SCRUG/DCC para tomar ideas sobre que modelos desarrollar con este tipo de datos.
