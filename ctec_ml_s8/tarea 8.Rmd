@@ -6,41 +6,54 @@ output: html_document
 # Tarea final
 
 ## Desarrolla una pregunta
-Identifica una pregunta que se pueda responder con un modelo de aprendizaje máquina supervisado utilizando los datos del sitio web http://datosabiertos.presidencia.go.cr/home.
 
-Puedes escoger datos de otras fuentes, pero tiene que ser sobre Costa y tienen que ser datos abiertos para que otra persona pueda reproducir el análisis.
+Se desea poder identificar el tipo de delito dada las caracteristicas del mismo, con un dataset que contiene los datos de los delitos unicamente para la zona de San Carlos y entre los años 2004 y 2018.
 
 
 ## Prepara los datos
-Ejecuta una exploración de datos para entender bien las variables que tienes disponibles y poder decidir cómo vas a responder tu pregunta. Es posible que tengas que cambiar la pregunta ligeramente (¡o mucho!), si es el caso describe el proceso y tu razonamiento para los cambios.
-
-Al final decide por 2 métodos de aprendizaje automático que son relevantes para la preguntas que quieres hacer.
 
 ```{r}
 library(dplyr)
 library(ggplot2)
 library(lubridate)
+library(caTools)
+library(ROCR)
+library(randomForest)
+library(e1071)
+library(data.table)
 ```
 
 
 ```{r}
-delitos_sc <- read.csv("Delitos_SC_2004_2018.csv", na.strings = c("DESCONOCIDO", "Desconocido"))
+delitos_sc <- read.csv("Delitos_SC_2004_2018.csv")
 delitos_sc <- delitos_sc[,1:9]
 delitos_sc$Fecha <- as.Date(delitos_sc$Fecha)
 glimpse(delitos_sc)
 ```
 
+Se puede observar que todos los datos son factores a excepcion de la fecha
+
 ```{r}
 visdat::vis_dat(delitos_sc)
 ```
 
+Se crean nuevas columnas con los datos independientes de la fecha para el analisis.
+Se eliminan las columnas no deseadas o que aportan informacion util.
+Se agregan las etiquetas a los niveles de las variables para una mejor impresion.
+Se omiten los años 2004 y 2005 debido a que hay varias columnas con ceros, y no era que no existieran esos delitos sino que no se registraba el valor en esos años.
 
 ```{r}
 delitos_sc <- delitos_sc %>% mutate(anho = as.integer(year(Fecha)), 
                                     mes = factor(month(Fecha)), 
                                     dia = factor(day(Fecha)),
-                                    dow = factor(wday(Fecha)))
-#delitos_sc$Fecha <- NULL
+                                    dow = factor(wday(Fecha))) %>%
+    filter(!anho %in% c(2004,2005))
+
+delitos_sc$Fecha <- NULL
+delitos_sc$Nacionalidad <- NULL
+delitos_sc$SubDelito <- NULL
+delitos_sc$SubVictima <- NULL
+
 levels(delitos_sc$dow) <- c("Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado")
 levels(delitos_sc$mes) <- c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
 
@@ -50,7 +63,7 @@ visdat::vis_dat(delitos_sc)
 ```
 
 
-Formato para los plots
+Se crea Formato para los plots
 
 ```{r}
 gg_formato <- geom_bar(stat = "count",
@@ -59,8 +72,8 @@ gg_formato <- geom_bar(stat = "count",
 gg_tipo <- theme(
   axis.text.x = element_text(
     face = "bold",
-    color = "#993333",
-    size = 8,
+    color = "purple",
+    size = 10,
     angle = 90,
     vjust = 0.5
   ),
@@ -72,78 +85,65 @@ gg_tipo <- theme(
 gg_y_etiq <- ylab("Cantidad")
 ```
 
+En la siguiente grafica se puede observar la cantidad de cada tipo de delito, donde los principales son el Hurto (en el que no hay violencia de por medio) y el Robo (que es mas violento).
 
-
-```{r}
-# levels(delitos_sc$Delito)
-# levels(delitos_sc$SubDelito)
-# levels(delitos_sc$Hora)
-# levels(delitos_sc$Victima)
-# levels(delitos_sc$SubVictima)
-# levels(delitos_sc$Edad)
-# levels(delitos_sc$Genero)
-# levels(delitos_sc$Nacionalidad)
-```
-
+La cantidad de Homicidios en muy poca por lo cual a cualquier algoritmo que se valla a utilizar le sera muy dificil detectar homicidios.
 
 ```{r}
 ggplot(delitos_sc, aes(x = Delito)) + gg_formato + gg_tipo + gg_y_etiq
 
 ```
 
-```{r}
-ggplot(delitos_sc, aes(x = SubDelito)) + gg_formato + gg_tipo + gg_y_etiq
+En la siguiente grafica se puede observar la cantidad de delitos que se cometen en cada rango de horas.
 
-```
+La mayor cantidad de Delitos se cometen entre medianoche y las 3 de la mañana, sin embargo mas adelante se detallara el caso. 
 
 ```{r}
 ggplot(delitos_sc, aes(x = Hora)) + gg_formato + gg_tipo + gg_y_etiq
 
 ```
 
+En la siguiente grafica se puede observar la cantidad de delitos para cada tipo de victima.
+
+La mayor cantidad de delitos son sobre la vivienda
+
 ```{r}
 ggplot(delitos_sc, aes(x = Victima)) + gg_formato + gg_tipo + gg_y_etiq
 
 ```
 
+En la siguiente grafica se puede observar la cantidad de delitos para cada rango de edad
 
 ```{r}
 ggplot(delitos_sc, aes(x = Edad)) + gg_formato + gg_tipo + gg_y_etiq
 
 ```
 
+En la siguiente grafica se puede observar la cantidad de delitos por genero.
+
 ```{r}
 ggplot(delitos_sc, aes(x = Genero)) + gg_formato + gg_tipo + gg_y_etiq
 
 ```
 
-```{r}
-ggplot(delitos_sc, aes(x = Nacionalidad)) + gg_formato + gg_tipo + gg_y_etiq
+En la siguiente grafica se puede observar la cantidad de delitos que se han cometido cada año.
 
-```
-
-
+Es notorio como en los años 2015 y 2016 se dieron la mayor cantidad de delitos en la zona, disminuyendo considerablemente para los años 2017 y 2018.
 
 ```{r}
-ggplot(data = delitos_sc, aes(x = anho)) + gg_formato + gg_y_etiq
+anho_table <- data.frame(table(delitos_sc$anho))
+colnames(anho_table)<-c("Anho", "Cantidad")
+
+ggplot(data = anho_table, aes(x = Anho, y = Cantidad, group = 1)) + gg_tipo + gg_y_etiq + geom_point(col = "purple") + geom_line(col = "red")
 ```
 
-
+A continuacion se muestra un mapa de calor con la distribucion de la cantidad de delitos por año y por mes.
 
 ```{r}
 
 anho_mes_table <- data.frame(table(delitos_sc$anho, delitos_sc$mes))
 colnames(anho_mes_table)<-c("Anho", "Mes", "Cantidad")
 
-ggplot(data = anho_mes_table, aes(x = Mes, y = Cantidad, colour = Anho, group = Anho)) + 
-    geom_point() + 
-    geom_line() +
-    gg_tipo +
-    scale_y_log10()
-```
-
-
-```{r}
 ggplot(data = anho_mes_table, aes(x = Anho, y = Mes, fill = Cantidad)) + 
     geom_tile() + 
     scale_fill_gradient2(mid = "green", high = "red") + 
@@ -161,9 +161,34 @@ ggplot(data = anho_mes_table, aes(x = Anho, y = Mes, fill = Cantidad)) +
   )
 ```
 
+El mismo anterior pero ahora se muestran los valores porcentuales del mes respecto del año completo, la distribucion en muy pareja, con valores entre el 5 y 12%
 
 ```{r}
+delitos_porc <- delitos_sc %>% group_by(anho, mes) %>% summarise(cant = n())
+setDT(delitos_porc)[, porc := 100*cant/sum(cant), by = anho]
+delitos_porc <- as.data.frame(delitos_porc)
 
+ggplot(data = delitos_porc, aes(x = anho, y = mes, fill = porc)) + 
+    geom_tile() + 
+    scale_fill_gradient2(mid = "green", high = "red") + 
+    theme(
+  axis.text.x = element_text(
+    face = "bold",
+    color = "#993333",
+    size = 12,
+    angle = 90,
+    vjust = 0.5
+  ),
+  axis.text.y = element_text(face = "bold",
+                             color = "blue",
+                             size = 10)
+  )
+```
+
+
+Aca se pueden observar los delitos que se han cometido cada dia de la semana durante el trancurso de los años, para el 2018 se puede ver una preferencia de los delitos en los dias Viernes, Sabado y Domingo.
+
+```{r}
 anho_dia_table <- data.frame(table(delitos_sc$anho, delitos_sc$dow))
 colnames(anho_dia_table)<-c("Anho", "Dia", "Cantidad")
 
@@ -173,18 +198,7 @@ ggplot(data = anho_dia_table, aes(x = Anho, y = Cantidad, colour = Dia, group = 
     gg_tipo 
 ```
 
-
-```{r}
-
-dia_hora_table <- data.frame(table(delitos_sc$dow, delitos_sc$Hora))
-colnames(dia_hora_table)<-c("Dia", "Hora", "Delitos")
-
-ggplot(data = dia_hora_table, aes(x = Hora, y = Delitos, colour = Dia, group = Dia)) + 
-    geom_point() + 
-    geom_line() +
-    gg_tipo +
-    scale_y_log10()
-```
+En la siguienet grafica se muestran las horas en que se cometen los delitos (durante el transcurso de los años), muy interesante de observar es que hasta el año 2014 se cometian muchos mas delitos entre medianoche y las 3am, lo cual cambia en el 2015, donde es igualado por los delitos entre las 6 y las 9 de la noche. 
 
 ```{r}
 
@@ -260,13 +274,6 @@ ggplot(data = anho_subdel_table, aes(x = Anho, y = Delitos, colour = Dia, group 
 
 
 ```{r}
-ggplot(delitos_sc, aes(x = SubDelito)) + 
-    gg_formato + 
-    gg_tipo + gg_y_etiq
-
-```
-
-```{r}
 ggplot(data = delitos_sc, aes(x = dia)) + gg_formato + gg_y_etiq
 ```
 
@@ -278,6 +285,87 @@ Desarolla 2 modelos de aprendizaje automatizado (supervisado o no supervisado). 
 Al final compara el desempeño de los dos modelos. Si es un método no supervisado el desempeño lo puedes describir como tu capacidad de responder la pregunta con una u otra (hay menos métricas y metodologías para hacer una comparación numérica).
 
 
+```{r}
+set.seed(123)
+splt <- sample.split(delitos_sc$Delito)
+delitos_sc_training <- delitos_sc[splt,]
+delitos_sc_test <- delitos_sc[!splt,]
+```
+
+
+
+
+
+## Random Forest
+
+
+```{r}
+glimpse(delitos_sc)
+
+set.seed(12321)
+ modelo.bosque <- randomForest(Delito ~ .,
+                              data = delitos_sc_training)
+
+```
+
+
+```{r}
+predicciones.bosque <- predict(modelo.bosque, 
+                               newdata = delitos_sc_test, 
+                               type = "class")
+
+table_bosque <- table(delitos_sc_test$Delito, predicciones.bosque)
+table_bosque
+
+```
+
+
+
+```{r}
+acertados_bosque <- 0
+for (i in 1:length(levels(delitos_sc$Delito))){
+    acertados_bosque <- acertados_bosque + table_bosque[i, i]
+}
+
+porc_acertado = 100 * acertados_bosque / length(delitos_sc_test$Delito)
+porc_acertado
+```
+
+## SVM
+
+```{r}
+
+t3 <- Sys.time()
+delitos_svm_model <- svm(Delito ~ ., 
+                        data = delitos_sc_training, 
+                        kernel = 'sigmoid',
+                        type = "C-classification")
+
+
+t4 <- Sys.time()
+t4 - t3
+summary(delitos_svm_model)
+```
+
+
+```{r}
+svm_prediccion <- predict(delitos_svm_model, newdata = delitos_sc_test)
+tabla_svm <- table(delitos_sc_test$Delito, svm_prediccion)
+
+```
+
+
+
+```{r}
+
+acertados_svm <- 0
+for (i in 1:length(levels(delitos_sc$Delito))){
+    acertados_svm <- acertados_svm + tabla_svm[i, i]
+}
+
+porc_acertado_svm = 100 * acertados_svm / length(delitos_sc_test$Delito)
+porc_acertado_svm
+```
 
 ### Calificación
 
