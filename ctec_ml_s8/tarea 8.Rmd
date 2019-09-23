@@ -4,6 +4,7 @@ output: html_document
 ---
 
 # Tarea final
+# Jorge Porras Araya
 
 ## Desarrolla una pregunta
 
@@ -38,8 +39,11 @@ visdat::vis_dat(delitos_sc)
 ```
 
 Se crean nuevas columnas con los datos independientes de la fecha para el analisis.
+
 Se eliminan las columnas no deseadas o que aportan informacion util.
+
 Se agregan las etiquetas a los niveles de las variables para una mejor impresion.
+
 Se omiten los años 2004 y 2005 debido a que hay varias columnas con ceros, y no era que no existieran esos delitos sino que no se registraba el valor en esos años.
 
 ```{r}
@@ -161,7 +165,7 @@ ggplot(data = anho_mes_table, aes(x = Anho, y = Mes, fill = Cantidad)) +
   )
 ```
 
-El mismo anterior pero ahora se muestran los valores porcentuales del mes respecto del año completo, la distribucion en muy pareja, con valores entre el 5 y 12%
+El mismo anterior pero ahora se muestran los valores porcentuales del mes respecto del año completo, la distribucion es muy pareja al inicio y al final, sin embargo entre los años 2010 y 2015 si se nota una diferencia importante en los alrededores del me de Agosto (donde se acumulan un poco mas los delitos), con valores entre el 5% y 12%.
 
 ```{r}
 delitos_porc <- delitos_sc %>% group_by(anho, mes) %>% summarise(cant = n())
@@ -211,23 +215,21 @@ ggplot(data = anho_hora_table, aes(x = Anho, y = Delitos, colour = Hora, group =
     gg_tipo 
 ```
 
+A continuacion una grafica con la distribución de los delitos por genero, donde se puede apreciar que los delitos sobre los hombres duplican el valor de las mujeres.
 
 ```{r}
-
 anho_genero_table <- data.frame(table(delitos_sc$anho, delitos_sc$Genero))
-colnames(anho_genero_table)<-c("Anho", "Genero", "Delitos")
+colnames(anho_genero_table) <- c("Anho", "Genero", "Delitos")
 
 ggplot(data = anho_genero_table, aes(x = Anho, y = Delitos, colour = Genero, group = Genero)) + 
     geom_point() + 
     geom_line() +
     gg_tipo 
-
 ```
 
-
+A travez de los años la mayor cantidad de delitos se han dado sobre las viviendas y luego sobre personas, como se puede apreciar a continuacion
 
 ```{r}
-
 anho_victima_table <- data.frame(table(delitos_sc$anho, delitos_sc$Victima))
 colnames(anho_victima_table)<-c("Anho", "Victima", "Delitos")
 
@@ -235,11 +237,9 @@ ggplot(data = anho_victima_table, aes(x = Anho, y = Delitos, colour = Victima, g
     geom_point() + 
     geom_line() +
     gg_tipo 
-
 ```
 
-
-
+Con gran ventaja sobre los demas, los delitos mas comunes son el Hurto y el Robo
 
 ```{r}
 
@@ -253,15 +253,14 @@ ggplot(data = anho_tipodel_table, aes(x = Anho, y = Delitos, colour = Delito, gr
 
 ```
 
-
-
+A travez de los años, el Sabado tiende a ser el dia favorito para los delitos.
 
 ```{r}
 
 temp <- filter(delitos_sc, Delito == "ASALTO")
 
 anho_subdel_table <- data.frame(table(temp$anho, temp$dow))
-colnames(anho_subdel_table)<-c("Anho", "Dia", "Delitos")
+colnames(anho_subdel_table) <- c("Anho", "Dia", "Delitos")
 
 ggplot(data = anho_subdel_table, aes(x = Anho, y = Delitos, colour = Dia, group = Dia)) + 
     geom_point() + 
@@ -272,18 +271,13 @@ ggplot(data = anho_subdel_table, aes(x = Anho, y = Delitos, colour = Dia, group 
 
 ```
 
+A continuacion la distribucion de delitos para cada dia del mes, la distribucion es muy pareja, el día 31 difiere de manera importante 5 (de los 12 meses) no poseen el dia 31.
 
 ```{r}
 ggplot(data = delitos_sc, aes(x = dia)) + gg_formato + gg_y_etiq
 ```
 
-
-
-## Desarrollo modelos
-Desarolla 2 modelos de aprendizaje automatizado (supervisado o no supervisado). Recuerda utilizar la metodologia CRISP-DM para implementar los modelos. Si buscas inspiración toma en cuenta que existe un repositorio de github https://github.com/SCRUG/DCC para tomar ideas sobre que modelos desarrollar con este tipo de datos.
-
-Al final compara el desempeño de los dos modelos. Si es un método no supervisado el desempeño lo puedes describir como tu capacidad de responder la pregunta con una u otra (hay menos métricas y metodologías para hacer una comparación numérica).
-
+Se crean los datasets de prueba y de entrenamiento
 
 ```{r}
 set.seed(123)
@@ -292,22 +286,18 @@ delitos_sc_training <- delitos_sc[splt,]
 delitos_sc_test <- delitos_sc[!splt,]
 ```
 
-
-
-
-
 ## Random Forest
 
+Creacion del primer modelo (Random Forest)
 
 ```{r}
-glimpse(delitos_sc)
-
 set.seed(12321)
  modelo.bosque <- randomForest(Delito ~ .,
                               data = delitos_sc_training)
 
 ```
 
+Se hacen las predicciones
 
 ```{r}
 predicciones.bosque <- predict(modelo.bosque, 
@@ -319,7 +309,7 @@ table_bosque
 
 ```
 
-
+Se puede observar que se acertaron en 64.74% del set de pruebas.
 
 ```{r}
 acertados_bosque <- 0
@@ -331,22 +321,19 @@ porc_acertado = 100 * acertados_bosque / length(delitos_sc_test$Delito)
 porc_acertado
 ```
 
+
 ## SVM
 
-```{r}
 
-t3 <- Sys.time()
+```{r}
 delitos_svm_model <- svm(Delito ~ ., 
                         data = delitos_sc_training, 
                         kernel = 'sigmoid',
                         type = "C-classification")
-
-
-t4 <- Sys.time()
-t4 - t3
 summary(delitos_svm_model)
 ```
 
+Predicciones del modelo
 
 ```{r}
 svm_prediccion <- predict(delitos_svm_model, newdata = delitos_sc_test)
@@ -354,10 +341,9 @@ tabla_svm <- table(delitos_sc_test$Delito, svm_prediccion)
 
 ```
 
-
+Se puede apreciar que con este modelo se acertaron el 61.92% de los datos del set de pruebas
 
 ```{r}
-
 acertados_svm <- 0
 for (i in 1:length(levels(delitos_sc$Delito))){
     acertados_svm <- acertados_svm + tabla_svm[i, i]
@@ -367,17 +353,12 @@ porc_acertado_svm = 100 * acertados_svm / length(delitos_sc_test$Delito)
 porc_acertado_svm
 ```
 
-### Calificación
+## Conclusiones
 
-* Desarrollo pregunta 25 %
-    + Comprensión del problema
-    + Desarrollo pregunta
-* Analisis exloratorio 25 %
-    + Comprensión de los datos
-    + Decisión sobre metodos de analisis
-* Modelado 25%
-    + Preparación de los datos
-    + Modelado
-* Comparacion de modelos 25%
-    + Evaluación de diferencias
-    + Conclusiones
+> Al igual que en los trabajos anteriores, Random Forest mejora ligeramente en las predicciones respecto de los demas modelos.
+
+> La tendencia de los delitos (en San Carlos) a cambiado con el tiempo, hace mas de 10 años la gran mayoria de los delitos eran cometidos entre medianoche y las 3am, hoy día este valos decrecio para ser igualado por los delitos entre las 6pm y las 9pm.
+
+> Asalto y homicidio son los principales delitos en San Carlos.
+
+> Los años 2015 y 2016 fueron los años que han presentado mayor cantidad de delitos en San Carlos, con mas de 2000 delitos cada uno.
