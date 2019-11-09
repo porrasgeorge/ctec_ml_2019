@@ -1,0 +1,135 @@
+---
+title: "Tarea4_5"
+author: "Jorge Porras Araya"
+date: "02/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+library(nycflights13)
+library(tidyverse)
+library(lubridate)
+```
+
+
+```{r}
+glimpse(flights)
+##glimpse(airports)
+
+```
+## Primera Parte
+
+### A) Flights es una tabla de una base de datos que contiene información de los vuelos que han salido de la ciudad de Nueva York en el año 2013.
+
+###  B) A continuación un gráfico de barras que representa la sumatoria de vuelos salientes de los aeropuertos de Nueva York a cada hora del día.
+
+```{r}
+Cantidad_hora <- data.frame(table(flights$hour))
+colnames(Cantidad_hora) = c("Hora", "Cantidad")
+Cantidad_hora <- Cantidad_hora %>% filter(Cantidad > 100)
+
+gv <- ggplot(data = Cantidad_hora, 
+            aes(x = Hora, 
+                y = Cantidad,
+                width = 0.666,
+                fill = Hora)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Vuelos Salientes de NYC", 
+       subtitle = "durante el 2013") +
+  theme_minimal() +
+  theme(legend.position = "none")
+gv
+```
+
+Se puede observar que a las 8 de la mañana es cuando mas vuelos parten de Nueva York y de medianoche a las 4am (inclusive) practicamente no hay salidas (con la excepción de que existió una partida a la 1am pero se elimina del gráfico pues no apreciable)
+
+
+### C) Grafico de barras horizontal
+
+Las Aerolineas más utilizadas, salientes de Nueva York se pueden observar a continuación, donde la más importante es United Air Lines.
+
+
+```{r}
+tf <- data.frame(table(flights$carrier))
+colnames(tf) = c("carrier", "cantidad")
+tf <- merge(x = tf, y = airlines, all.x = TRUE)
+tf <- tf %>% arrange(desc(cantidad))
+tf <- tf[,c(2, 3)]
+t1_a = tf[1:7,]
+t1_b = tf[8:nrow(tf),]
+t1_c <- data.frame("name" = "Otros", 
+                   "cantidad" = sum(t1_b$cantidad))
+
+t1 = rbind(t1_a, t1_c)
+t1$order <- seq(1, length(t1$cantidad))
+
+t1 = t1 %>% mutate(porc = round(100 * cantidad / sum(cantidad), 2))
+colnames(t1) = c("Cantidad", "Aerolinea","Orden", "Porcentaje")
+
+
+```
+
+```{r}
+
+gh <- ggplot(data = t1, 
+            aes(x = reorder(Aerolinea, -Orden), 
+                y = Cantidad / 1000,
+                width = 0.666,
+                fill = Aerolinea)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Vuelos Salientes de NYC durante el 2013", 
+       subtitle = "en miles",
+       x = "Aerolinea",
+       y = "Cantidad de Vuelos (k)") +
+  theme(legend.position = "none") +
+  coord_flip()
+
+gh
+
+```
+
+
+
+
+### D) 
+
+```{r}
+porc_aeropuerto <- data.frame(table(flights$origin))
+colnames(porc_aeropuerto) = c("faa", "cantidad")
+porc_aeropuerto <- merge(x = porc_aeropuerto, y = airports, all.x = TRUE)
+porc_aeropuerto <- porc_aeropuerto[,c(1,2,3)]
+porc_aeropuerto <- porc_aeropuerto %>% mutate(porc = cantidad / sum(porc_aeropuerto$cantidad)) %>% arrange(desc(cantidad))
+porc_aeropuerto$porc <- round(porc_aeropuerto$porc * 100 , 1)
+porc_aeropuerto <- ungroup(porc_aeropuerto)
+colnames(porc_aeropuerto) = c("faa", "Cantidad", "Aeropuerto", "Porcentaje")
+porc_aeropuerto$order <- seq(1, length(porc_aeropuerto$Cantidad))
+
+gp <- ggplot(data = porc_aeropuerto, 
+            aes(x = "", 
+                y = Porcentaje,
+                fill = reorder(Aeropuerto, -order))) +
+  geom_bar(width = 1, 
+           size = 1, 
+           color = "white", 
+           stat = "identity") +
+  geom_text(aes(label = paste0(Porcentaje, "%")),
+            position = position_stack(vjust = 0.5), 
+            color = "white") +
+  labs(title = "Vuelos Salientes de NYC") +
+  coord_polar("y", direction = 1) +
+  theme_void()
+
+gp
+```
+
+
+## II Parte
+
+1) 
+b) 
+
