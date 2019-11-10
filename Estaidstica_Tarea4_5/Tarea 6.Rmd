@@ -1,0 +1,81 @@
+---
+title: "Tarea 6"
+author: "Jorge Porras Araya"
+date: "9/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Un juego consiste en gira runa ruleta que tiene 3 opciones de premio y 13 opciones no
+premio. Una persona que juegue la ruleta ganará si al girarla obtiene la opción “premio”
+antes del cuarto intento. Calcule la probabilidad de si una persona juega la ruleta 12 veces,
+esta gane premio en más de la mitad de los intentos.
+
+
+```{r}
+
+```
+
+```{r}
+q <- 2
+premio <- 3
+npremio <- 13
+prob <- premio/(premio + npremio)
+p1 <- pgeom(q,prob)
+
+```
+
+La probabilidad es de :
+
+```{r}
+q <- 6
+size <- 12
+pbinom(q, size, p1, lower.tail = F)
+
+```
+
+
+2. Suponga que en cada partido que disputa Keylor Navas recibe 10 remates directos, en cada remate tiene una probabilidad de 0.73 de detenerlo. El entrenador del equipo de Keylor considera que un marcador atípico es en el que reciben más de dos goles. Calcule la probabilidad de que, en un torneo de 15 partidos, el primer marcador atípico se tenga después del octavo partido.
+
+```{r}
+p <- 1 - 0.73
+n <- 10
+q <- 2
+```
+
+
+```{r}
+1- pbinom(q, n, p)
+1- sum(dbinom(c(0,1,2), n, p))
+pbinom(2, n, p, lower.tail = F)
+```
+
+aaaaaaaaaaaaa
+
+```{r}
+p <- 0.5335112
+n <- 15
+q <- 9
+```
+
+
+```{r}
+pbinom(q, n, p, lower.tail = F)
+```
+```
+
+
+
+
+
+
+3. El número de cierres totales de la carretera de circunvalación a la altura de la rotonda de Garantías Sociales, siguen una distribución Poisson con media 2.4 cierres por día. Un día se considera como de tránsito pesado cuando la carretera debe cerrarse totalmente en más de 4 cuatro ocasiones. Durante los próximos 10 días, ¿cuál es la probabilidad de tener el primer día de tránsito pesado en alguno de los primeros 5 días?
+
+```{r}
+ppois(6, 5.3, lower.tail = F)
+```
+
+dpois()
